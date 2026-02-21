@@ -1,6 +1,6 @@
 {
   "name": "@robmoffat/standard-cucumber-steps",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Reusable Cucumber step definitions for TypeScript",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,9 +9,16 @@
     "test": "c8 cucumber-js"
   },
   "c8": {
-    "include": ["src/**/*.ts"],
-    "exclude": ["src/**/*.d.ts"],
-    "reporter": ["html", "text"],
+    "include": [
+      "src/**/*.ts"
+    ],
+    "exclude": [
+      "src/**/*.d.ts"
+    ],
+    "reporter": [
+      "html",
+      "text"
+    ],
     "all": true
   },
   "dependencies": {
