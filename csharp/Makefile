@@ -4,6 +4,7 @@ DOTNET_COVERAGE ?= $(shell which dotnet-coverage 2>/dev/null || echo $$HOME/.dot
 .PHONY: test
 
 test:
+	rm -rf TestResults
 	$(DOTNET) test --collect "Code Coverage" --results-directory TestResults
 	$(DOTNET_COVERAGE) merge --output coverage.xml --output-format cobertura TestResults/*/*.coverage
 	$(DOTNET) tool restore

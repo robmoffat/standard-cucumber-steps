@@ -19,8 +19,8 @@ obj/
 bin/
 TestResults/
 *.user
-
-# Reqnroll generates .feature.cs files next to the source .feature files
+csharp/coverage.xml
+csharp/features/*.feature.cs
 features/*.feature.cs
 
 # Editor / OS
@@ -28,4 +28,3 @@ features/*.feature.cs
 .idea/
 .vscode/
 *.swp
-csharp/coverage.xml

@@ -17,41 +17,6 @@ public class GenericSteps
         _world = world;
     }
 
-    // ========== Promise Resolution Steps ==========
-
-    [When("the promise {string} should resolve")]
-    [Then("the promise {string} should resolve")]
-    public async Task ThePromiseShouldResolve(string field)
-    {
-        try
-        {
-            var promise = MatchingUtils.HandleResolve(field, _world);
-            var result = await ResolveAsync(promise);
-            _world.Set("result", result);
-        }
-        catch (Exception e)
-        {
-            _world.Set("result", e);
-        }
-    }
-
-    [When("the promise {string} should resolve within 10 seconds")]
-    [Then("the promise {string} should resolve within 10 seconds")]
-    public async Task ThePromiseShouldResolveWithin10Seconds(string field)
-    {
-        try
-        {
-            var promise = MatchingUtils.HandleResolve(field, _world);
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-            var result = await ResolveAsync(promise).WaitAsync(cts.Token);
-            _world.Set("result", result);
-        }
-        catch (Exception e)
-        {
-            _world.Set("result", e);
-        }
-    }
-
     // ========== Method Invocation (Object.method) Steps ==========
 
     [When("I call {string} with {string}")]
@@ -605,24 +570,15 @@ public class GenericSteps
 
     // ========== Helpers ==========
 
-    private static async Task<object?> ResolveAsync(object? value)
-    {
-        if (value is Task<object?> taskOfObj) return await taskOfObj;
-        if (value is Task task) { await task; return null; }
-        if (value is Func<Task<object?>> asyncFn) return await asyncFn();
-        if (value is Func<object?> syncFn) return syncFn();
-        return value;
-    }
-
     private static async Task<object?> CallFunctional(object? fn)
     {
         if (fn is Action action) { action(); return null; }
-        // Check async task delegates BEFORE Func<object?> — Func<T> is covariant so
-        // Func<Task<object?>> would otherwise match Func<object?> and return the Task unwrapped.
+        // Fast path for the most common case
         if (fn is Func<Task<object?>> asyncFunc) return await asyncFunc();
-        if (fn is Func<Task> asyncAction) { await asyncAction(); return null; }
-        if (fn is Func<object?> func) return func();
-        // Generic delegate fallback — handles Func<Task<T>> for any T
+        // Generic delegate fallback — handles Func<Task<T>>, Func<Task>, Func<object?>, Func<string> etc.
+        // NOTE: Func<Task> and Func<object?> are NOT checked separately here because Func<T> is covariant:
+        // Func<Task<string>> would match Func<Task> and Func<string> would match Func<object?> prematurely,
+        // causing Task<T> results to be lost. DynamicInvoke handles all these correctly.
         if (fn is Delegate d)
         {
             var result = d.DynamicInvoke();
@@ -630,7 +586,7 @@ public class GenericSteps
             if (result is Task genericTask)
             {
                 await genericTask;
-                // Extract Result via reflection for Task<T>
+                // Extract Result via reflection for Task<T> (plain Task has no Result property → null)
                 var resultProp = genericTask.GetType().GetProperty("Result");
                 return resultProp?.GetValue(genericTask);
             }
