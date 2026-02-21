@@ -1,0 +1,30 @@
+# TypeScript / Node
+node_modules/
+dist/
+.nyc_output/
+coverage/
+reports/
+
+# Java / Maven
+target/
+*.class
+
+# Go
+bin/
+*.out
+*.test
+
+# C# / .NET
+obj/
+bin/
+TestResults/
+*.user
+
+# Reqnroll generates .feature.cs files next to the source .feature files
+features/*.feature.cs
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp

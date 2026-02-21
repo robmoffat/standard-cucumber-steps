@@ -1,0 +1,28 @@
+{
+  "name": "@robmoffat/standard-cucumber-steps",
+  "version": "0.1.0",
+  "description": "Reusable Cucumber step definitions for TypeScript",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "cucumber-js",
+    "coverage": "nyc npm test"
+  },
+  "dependencies": {
+    "@cucumber/cucumber": "^10.0.0",
+    "expect": "^29.0.0",
+    "jsonpath-plus": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "nyc": "^15.0.0",
+    "ts-node": "^10.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "license": "Apache-2.0"
+}
