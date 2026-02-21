@@ -9,10 +9,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
-      - run: dotnet test --collect:"XPlat Code Coverage" --results-directory TestResults
+          dotnet-version: '10.0.x'
+      - name: Install reportgenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+      - name: Run tests with coverage
+        run: dotnet test test/ --collect:"XPlat Code Coverage" --results-directory TestResults
         working-directory: csharp
-      - run: dotnet tool restore && dotnet tool run reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:coverage -reporttypes:Html
+      - name: Generate coverage report
+        run: reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:coverage -reporttypes:Html
         working-directory: csharp
       - uses: actions/upload-artifact@v4
         if: always()
