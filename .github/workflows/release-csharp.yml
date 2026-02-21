@@ -1,38 +1,48 @@
 name: Release C#
 
 on:
-    push:
-        tags:
-            - "v*"
+  push:
+    tags:
+      - "v*"
 
 jobs:
-    release:
-        runs-on: ubuntu-latest
-        defaults:
-            run:
-                working-directory: csharp
-        steps:
-            - uses: actions/checkout@v4
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-            - uses: actions/setup-dotnet@v4
-              with:
-                  dotnet-version: "8.0.x"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
 
-            - name: Extract version from tag
-              id: version
-              run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-            - name: Restore dependencies
-              run: dotnet restore
+      - name: Install tools
+        run: |
+          dotnet tool install -g dotnet-coverage
+          dotnet tool install -g dotnet-reportgenerator-globaltool
 
-            - name: Build
-              run: dotnet build -c Release --no-restore
+      - name: Copy shared feature files
+        run: mkdir -p csharp/test/features/shared && cp features/*.feature csharp/test/features/shared/
 
-            - name: Test
-              run: dotnet test -c Release --no-build
+      - name: Restore dependencies
+        run: dotnet restore src/
+        working-directory: csharp
 
-            - name: Pack
-              run: dotnet pack -c Release --no-build -p:PackageVersion=${{ steps.version.outputs.VERSION }} -o ./nupkg
+      - name: Build
+        run: dotnet build src/ -c Release --no-restore
+        working-directory: csharp
 
-            - name: Push to NuGet
-              run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+      - name: Test
+        run: dotnet test test/ -c Release --collect "Code Coverage" --settings test/coverage.runsettings --results-directory TestResults
+        working-directory: csharp
+
+      - name: Pack
+        run: dotnet pack src/ -c Release --no-build -p:PackageVersion=${{ steps.version.outputs.VERSION }} -o ./nupkg
+        working-directory: csharp
+
+      - name: Push to NuGet
+        run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        working-directory: csharp
