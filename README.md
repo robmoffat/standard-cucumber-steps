@@ -1,6 +1,6 @@
 # Standard Cucumber Steps
 
-Reusable Cucumber step definitions for TypeScript, Java, Go, and C# — a single canonical DSL for BDD testing across languages.
+TLDR: Reusable Cucumber step definitions for TypeScript, Java, Go, and C# — a single canonical DSL for BDD testing across languages.  An excellent fit for hands-off, agentic code development.
 
 ## What this is
 
