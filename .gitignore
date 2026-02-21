@@ -20,8 +20,9 @@ bin/
 TestResults/
 *.user
 csharp/coverage.xml
-csharp/features/*.feature.cs
-features/*.feature.cs
+csharp/test/features/shared/
+# Reqnroll generates these at build time — never commit them
+**/*.feature.cs
 
 # Editor / OS
 .DS_Store

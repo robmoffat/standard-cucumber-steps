@@ -4,7 +4,7 @@ DOTNET_COVERAGE ?= $(shell which dotnet-coverage 2>/dev/null || echo $$HOME/.dot
 .PHONY: test clean
 
 test: clean
-	$(DOTNET) test test/ --collect "Code Coverage" --results-directory test/TestResults
+	$(DOTNET) test test/ --collect "Code Coverage" --settings test/coverage.runsettings --results-directory test/TestResults
 	$(DOTNET_COVERAGE) merge --output coverage.xml --output-format cobertura test/TestResults/*/*.coverage
 	$(DOTNET) tool restore --tool-manifest test/.config/dotnet-tools.json 2>/dev/null || $(DOTNET) tool restore
 	$(DOTNET) tool run reportgenerator -reports:"coverage.xml" -targetdir:coverage -reporttypes:Html

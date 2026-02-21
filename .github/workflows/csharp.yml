@@ -15,7 +15,7 @@ jobs:
           dotnet tool install -g dotnet-coverage
           dotnet tool install -g dotnet-reportgenerator-globaltool
       - name: Run tests with coverage
-        run: dotnet test test/ --collect "Code Coverage" --results-directory TestResults
+        run: dotnet test test/ --collect "Code Coverage" --settings test/coverage.runsettings --results-directory TestResults
         working-directory: csharp
       - name: Convert coverage to Cobertura
         run: dotnet-coverage merge --output coverage.xml --output-format cobertura "TestResults/*/*.coverage"
