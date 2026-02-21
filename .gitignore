@@ -28,3 +28,4 @@ features/*.feature.cs
 .idea/
 .vscode/
 *.swp
+csharp/coverage.xml
