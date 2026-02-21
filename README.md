@@ -1,4 +1,4 @@
-# standard-cucumber-steps
+# Standard Cucumber Steps
 
 Reusable Cucumber step definitions for TypeScript, Java, Go, and C# — a single canonical DSL for BDD testing across languages.
 
@@ -11,7 +11,7 @@ The step definitions share a **common DSL**: the same `.feature` files run again
 ## Why this is useful
 
 Cucumber is a good fit for some testing problems and a poor fit for others. Before reaching for it, it is worth understanding the trade-offs:
-
+|-|-|-|
 |---|---|---|
 | Pro | **Readable by non-engineers** | Scenarios written in plain English can be reviewed and authored by product managers, QA analysts, and domain experts without reading code |
 | Pro | **Living documentation** | Feature files stay in sync with the implementation by definition — if a scenario fails, the documentation is wrong |
@@ -19,7 +19,6 @@ Cucumber is a good fit for some testing problems and a poor fit for others. Befo
 | Pro | **Encourages separation of concerns** | The glue layer (step definitions) is forced to stay thin; business logic cannot hide inside tests |
 | Pro | **Reporting is excellent** | Step definitions pass and fail cleanly and you can see exactly how far a test has got without debugging it |
 | Con | **Higher maintenance overhead** | Each scenario needs corresponding step definitions; large test suites can become hard to manage without discipline.   This usually puts developers off using Cucumber as you feel you are writing everything twice. |
-| Con | **Abstraction can obscure intent** | Deep prop-reference chains (`{result}` of `{result}`) can be harder to read than direct assertions in code |
 
 SCS addresses the maintenance cost directly: writing step definitions is repetitive boilerplate that every project reimplements. SCS does it once, correctly, across four languages.
 
@@ -31,6 +30,20 @@ This is especially valuable when:
 - **Writing tests for generated code** — code generators that target multiple languages can share a single golden test suite.
 
 ## Quick example
+
+Let's say you have this interface (typescript):
+
+```typescript
+interface BankAccount {
+
+  deposit(amt: number)
+
+  getBalance() : number
+
+}
+```
+
+We can write this feature file to test the implementation:
 
 ```gherkin
 Scenario: Depositing money increases the balance
