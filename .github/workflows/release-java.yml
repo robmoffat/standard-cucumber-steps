@@ -2,6 +2,10 @@ name: Release Java
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 1.0.0)'
+        required: true
   push:
     tags:
       - "v*"
@@ -25,9 +29,14 @@ jobs:
                   gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
                   gpg-passphrase: GPG_PASSPHRASE
 
-            - name: Extract version from tag
+            - name: Extract version
               id: version
-              run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+              run: |
+                if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+                  echo "VERSION=${{ inputs.version }}" >> $GITHUB_OUTPUT
+                else
+                  echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+                fi
 
             - name: Set version in pom.xml
               run: mvn versions:set -DnewVersion=${{ steps.version.outputs.VERSION }}
