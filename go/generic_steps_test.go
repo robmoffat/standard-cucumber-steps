@@ -73,6 +73,47 @@ func setupTestFixtures(world *generic.PropsWorld) {
 
 	// Test calculator object for method invocation tests
 	world.Props["testCalculator"] = &TestCalculator{Value: 42}
+
+	// Nested objects for JSONPath tests
+	world.Props["nestedObject"] = map[string]interface{}{
+		"name": "parent",
+		"level1": map[string]interface{}{
+			"level2": "deep-value",
+		},
+	}
+
+	world.Props["arrayWithObjects"] = []interface{}{
+		map[string]interface{}{"id": "1", "name": "first"},
+		map[string]interface{}{"id": "2", "name": "second"},
+		map[string]interface{}{"id": "3", "name": "third"},
+	}
+
+	world.Props["deeplyNested"] = map[string]interface{}{
+		"a": map[string]interface{}{
+			"b": map[string]interface{}{
+				"c": map[string]interface{}{
+					"d": "found",
+				},
+			},
+		},
+	}
+
+	world.Props["userArray"] = []interface{}{
+		map[string]interface{}{
+			"name": "Alice",
+			"address": map[string]interface{}{
+				"city": "New York",
+				"zip":  "10001",
+			},
+		},
+		map[string]interface{}{
+			"name": "Bob",
+			"address": map[string]interface{}{
+				"city": "Los Angeles",
+				"zip":  "90001",
+			},
+		},
+	}
 }
 
 func TestFeatures(t *testing.T) {
