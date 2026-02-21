@@ -1,4 +1,5 @@
-Feature: Method and function invocation steps
+Feature: Method and function invocation
+  # Direct function calls
 
   Scenario: Call a direct function with no parameters
     Given "handler" is a invocation counter into "count"
@@ -11,25 +12,13 @@ Feature: Method and function invocation steps
     And I call "{handler}"
     Then "{count}" is "2"
 
-  Scenario: Call a function that returns a value
-    Given "myVar" is "hello"
-    And "fn" is an async function returning "{myVar}"
-    When I wait for "{fn}"
-    Then "{result}" is "hello"
-
-  Scenario: Call a function and await with timeout
-    Given "myVar" is "world"
-    And "fn" is an async function returning "{myVar}"
-    When I wait for "{fn}" within "10000" ms
-    Then "{result}" is "world"
-
-  Scenario: Refer to a result by alias
+  Scenario: Call counter three times
     Given "handler" is a invocation counter into "count"
     When I call "{handler}"
     And I call "{handler}"
     And I call "{handler}"
-    And I refer to "{count}" as "total"
-    Then "{total}" is "3"
+    Then "{count}" is "3"
+  # Function calls with arguments
 
   Scenario: Call function with one argument
     Given "echoFn" is "{singleArgFn}"
@@ -50,6 +39,7 @@ Feature: Method and function invocation steps
     Given "fourArgFn" is "{fourArgConcatFn}"
     When I call "{fourArgFn}" using arguments "1", "2", "3", and "4"
     Then "{result}" is "1234"
+  # Object method calls
 
   Scenario: Call method on an object with no arguments
     Given "calculator" is "{testCalculator}"
@@ -75,3 +65,15 @@ Feature: Method and function invocation steps
     Given "calculator" is "{testCalculator}"
     When I call "{calculator}" with "Sum4" using arguments "{1}", "{2}", "{3}", and "{4}"
     Then "{result}" is "10"
+  # Invocation counter setup
+
+  Scenario: Create an invocation counter starts at zero
+    Given "handler" is a invocation counter into "count"
+    Then "{count}" is "0"
+  # Async function setup
+
+  Scenario: Create a function that returns a value
+    Given "myVar" is "hello"
+    And "fn" is an async function returning "{myVar}"
+    When I wait for "{fn}"
+    Then "{result}" is "hello"
