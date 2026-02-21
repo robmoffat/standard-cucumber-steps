@@ -8,38 +8,38 @@ Feature: Variable management
     Then "{myAlias}" is "1"
 
   Scenario: Refer to a string value
-    Given "myValue" is "hello world"
+    Given I set "myValue" to "hello world"
     When I refer to "{myValue}" as "copied"
     Then "{copied}" is "hello world"
 
   Scenario: Simple variable lookup
-    Given "myValue" is "test-value"
+    Given I set "myValue" to "test-value"
     When I refer to "{myValue}" as "copied"
     Then "{copied}" is "test-value"
   # Boolean literals
 
   Scenario: Set and check boolean true literal
-    Given "myFlag" is "{true}"
+    Given I set "myFlag" to "{true}"
     Then "{myFlag}" is true
 
   Scenario: Set and check boolean false literal
-    Given "myFlag" is "{false}"
+    Given I set "myFlag" to "{false}"
     Then "{myFlag}" is false
   # Numeric literals
 
   Scenario: Set and check a numeric literal
-    Given "myNum" is "{1}"
+    Given I set "myNum" to "{1}"
     Then "{myNum}" is "1"
 
   Scenario: Resolve numeric literal zero
-    Given "val" is "{0}"
+    Given I set "val" to "{0}"
     Then "{val}" is false
 
   Scenario: Resolve negative number
-    Given "val" is "{-5}"
+    Given I set "val" to "{-5}"
     Then "{val}" should be less than "{0}"
   # Null literal
 
   Scenario: Explicitly set null and check
-    Given "myNull" is "{null}"
+    Given I set "myNull" to "{null}"
     Then "{myNull}" is null

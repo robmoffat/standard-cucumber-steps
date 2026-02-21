@@ -258,16 +258,16 @@ export function setupGenericSteps() {
     expect(handleResolve(field, this)).toHaveLength(0);
   });
 
-  Given('{string} is {string}', function (this: PropsWorld, field: string, value: string) {
-    const resolved = handleResolve(value, this);
-    if (field.startsWith('{') && field.endsWith('}')) {
-      // Assertion mode: Then "{count}" is "3"
-      const fVal = handleResolve(field, this);
-      expect('' + fVal).toEqual('' + resolved);
-    } else {
-      // Setter mode: Given "greeting" is "hello world"
-      this.props[field] = resolved;
-    }
+  // Setter step: Given I set "field" to "value"
+  Given('I set {string} to {string}', function (this: PropsWorld, field: string, value: string) {
+    this.props[field] = handleResolve(value, this);
+  });
+
+  // Assertion step: Then "{field}" is "value"
+  Then('{string} is {string}', function (this: PropsWorld, field: string, value: string) {
+    const actual = handleResolve(field, this);
+    const expected = handleResolve(value, this);
+    expect('' + actual).toEqual('' + expected);
   });
 
   // ========== Error Assertions ==========

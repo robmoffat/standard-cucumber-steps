@@ -18,7 +18,7 @@ Feature: Array and object assertions
       | Alice |
 
   Scenario: Array contains at least specified rows
-    Given "testArray" is "{sampleArray}"
+    Given I set "testArray" to "{sampleArray}"
     Then "{testArray}" is an array of objects with at least the following contents
       | name  |
       | Alice |
@@ -39,11 +39,11 @@ Feature: Array and object assertions
     Then "{result}" is an array of objects with length "2"
 
   Scenario: Array has specific length
-    Given "arr" is "{sampleArray}"
+    Given I set "arr" to "{sampleArray}"
     Then "{arr}" is an array of objects with length "2"
 
   Scenario: Empty array has length zero
-    Given "arr" is "{sampleEmptyArray}"
+    Given I set "arr" to "{sampleEmptyArray}"
     Then "{arr}" is an array of objects with length "0"
   # Array of strings
 
@@ -57,7 +57,7 @@ Feature: Array and object assertions
       | three |
 
   Scenario: String array with expected values
-    Given "arr" is "{sampleStringArray}"
+    Given I set "arr" to "{sampleStringArray}"
     Then "{arr}" is an array of strings with the following values
       | value |
       | one   |
@@ -73,7 +73,7 @@ Feature: Array and object assertions
       | John |  30 |
 
   Scenario: Object has expected properties
-    Given "obj" is "{sampleObject}"
+    Given I set "obj" to "{sampleObject}"
     Then "{obj}" is an object with the following contents
       | name | age |
       | John |  30 |

@@ -69,7 +69,7 @@ public class GenericSteps
         }
     }
 
-    [When("I call {string} with {string} with parameter {string}")]
+    [When("I call {string} with {string} using argument {string}")]
     public async Task ICallWithParameter(string field, string methodName, string param)
     {
         try
@@ -85,7 +85,7 @@ public class GenericSteps
         }
     }
 
-    [When("I call {string} with {string} with parameters {string} and {string}")]
+    [When("I call {string} with {string} using arguments {string} and {string}")]
     public async Task ICallWithTwoParameters(string field, string methodName, string param1, string param2)
     {
         try
@@ -102,7 +102,7 @@ public class GenericSteps
         }
     }
 
-    [When("I call {string} with {string} with parameters {string} and {string} and {string}")]
+    [When("I call {string} with {string} using arguments {string}, {string}, and {string}")]
     public async Task ICallWithThreeParameters(string field, string methodName, string param1, string param2, string param3)
     {
         try
@@ -137,7 +137,7 @@ public class GenericSteps
         }
     }
 
-    [When("I call {string} with parameter {string}")]
+    [When("I call {string} using argument {string}")]
     public async Task ICallFunctionWithParameter(string fnName, string param)
     {
         try
@@ -153,7 +153,7 @@ public class GenericSteps
         }
     }
 
-    [When("I call {string} with parameters {string} and {string}")]
+    [When("I call {string} using arguments {string} and {string}")]
     public async Task ICallFunctionWithTwoParameters(string fnName, string param1, string param2)
     {
         try
@@ -170,7 +170,7 @@ public class GenericSteps
         }
     }
 
-    [When("I call {string} with parameters {string} and {string} and {string}")]
+    [When("I call {string} using arguments {string}, {string}, and {string}")]
     public async Task ICallFunctionWithThreeParameters(string fnName, string param1, string param2, string param3)
     {
         try
@@ -364,8 +364,8 @@ public class GenericSteps
         }));
     }
 
-    [Given("{string} is {string}")]
-    public void FieldIsValue(string field, string value)
+    [Given("I set {string} to {string}")]
+    public void ISetFieldTo(string field, string value)
     {
         _world.Set(field, MatchingUtils.HandleResolve(value, _world));
     }
@@ -455,7 +455,7 @@ public class GenericSteps
         }
     }
 
-    [When("I wait for {string} with parameter {string}")]
+    [When("I wait for {string} using argument {string}")]
     public async Task IWaitForWithParam(string fnName, string param)
     {
         try
@@ -470,7 +470,7 @@ public class GenericSteps
         }
     }
 
-    [When("I wait for {string} with parameters {string} and {string}")]
+    [When("I wait for {string} using arguments {string} and {string}")]
     public async Task IWaitForWithTwoParams(string fnName, string param1, string param2)
     {
         try

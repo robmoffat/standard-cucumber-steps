@@ -756,20 +756,21 @@ func (pw *PropsWorld) IsAnAsyncFunctionReturning(fnName, field string) error {
 	return nil
 }
 
+// Setter step: I set "field" to "value"
+func (pw *PropsWorld) iSetFieldTo(field, value string) error {
+	pw.Props[field] = pw.HandleResolve(value)
+	return nil
+}
+
+// Assertion step: "{field}" is "value"
 func (pw *PropsWorld) fieldIs(field, value string) error {
-	resolved := pw.HandleResolve(value)
-	// If field has {braces}, it's a prop lookup — assertion mode
-	// If field is a bare string, it's a prop key — setter mode
-	if strings.HasPrefix(field, "{") && strings.HasSuffix(field, "}") {
-		actual := pw.HandleResolve(field)
-		actualStr := fmt.Sprintf("%v", actual)
-		expectedStr := fmt.Sprintf("%v", resolved)
-		if actualStr != expectedStr {
-			return fmt.Errorf("expected %s to equal '%s', got '%s'", field, expectedStr, actualStr)
-		}
-		return nil
+	actual := pw.HandleResolve(field)
+	expected := pw.HandleResolve(value)
+	actualStr := fmt.Sprintf("%v", actual)
+	expectedStr := fmt.Sprintf("%v", expected)
+	if actualStr != expectedStr {
+		return fmt.Errorf("expected %s to equal '%s', got '%s'", field, expectedStr, actualStr)
 	}
-	pw.Props[field] = resolved
 	return nil
 }
 
@@ -1037,6 +1038,7 @@ func (pw *PropsWorld) RegisterSteps(s *godog.ScenarioContext) {
 	s.Step(`^"([^"]*)" is false$`, pw.fieldIsFalse)
 	s.Step(`^"([^"]*)" is empty$`, pw.fieldIsEmpty)
 	s.Step(`^"([^"]*)" is "([^"]*)"$`, pw.fieldIs)
+	s.Step(`^I set "([^"]*)" to "([^"]*)"$`, pw.iSetFieldTo)
 	s.Step(`^"([^"]*)" is an error with message "([^"]*)"$`, pw.fieldIsErrorWithMessage)
 	s.Step(`^"([^"]*)" is an error$`, pw.fieldIsError)
 	s.Step(`^"([^"]*)" is not an error$`, pw.fieldIsNotError)

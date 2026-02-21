@@ -11,7 +11,7 @@ Feature: Value assertions
   # Null assertions
 
   Scenario: Assert is null
-    Given "nullValue" is "{null}"
+    Given I set "nullValue" to "{null}"
     Then "{nullValue}" is null
 
   Scenario: Assert not null after calling counter
@@ -21,73 +21,73 @@ Feature: Value assertions
   # Truthy/falsy assertions - booleans
 
   Scenario: Boolean true is truthy
-    Given "val" is "{true}"
+    Given I set "val" to "{true}"
     Then "{val}" is true
 
   Scenario: Boolean false is falsy
-    Given "val" is "{false}"
+    Given I set "val" to "{false}"
     Then "{val}" is false
   # Truthy/falsy assertions - numbers
 
   Scenario: Zero is falsy
-    Given "val" is "{0}"
+    Given I set "val" to "{0}"
     Then "{val}" is false
 
   Scenario: Positive number is truthy
-    Given "val" is "{42}"
+    Given I set "val" to "{42}"
     Then "{val}" is true
 
   Scenario: Negative number is truthy
-    Given "val" is "{-1}"
+    Given I set "val" to "{-1}"
     Then "{val}" is true
 
   Scenario: Floating point positive is truthy
-    Given "val" is "{3.14}"
+    Given I set "val" to "{3.14}"
     Then "{val}" is true
   # Truthy/falsy assertions - strings
 
   Scenario: Non-empty string is truthy
-    Given "val" is "hello"
+    Given I set "val" to "hello"
     Then "{val}" is true
 
   Scenario: Empty string is falsy
-    Given "val" is ""
+    Given I set "val" to ""
     Then "{val}" is false
   # Truthy/falsy assertions - null
 
   Scenario: Null is falsy
-    Given "val" is "{null}"
+    Given I set "val" to "{null}"
     Then "{val}" is false
   # Truthy/falsy assertions - objects and arrays
 
   Scenario: Object is truthy
-    Given "val" is "{sampleObject}"
+    Given I set "val" to "{sampleObject}"
     Then "{val}" is true
 
   Scenario: Array is truthy
-    Given "val" is "{sampleArray}"
+    Given I set "val" to "{sampleArray}"
     Then "{val}" is true
 
   Scenario: Empty array is truthy (as an object)
-    Given "val" is "{sampleEmptyArray}"
+    Given I set "val" to "{sampleEmptyArray}"
     Then "{val}" is true
   # Empty assertions
 
   Scenario: Empty string is empty
-    Given "val" is ""
+    Given I set "val" to ""
     Then "{val}" is empty
 
   Scenario: Empty array is empty
-    Given "val" is "{sampleEmptyArray}"
+    Given I set "val" to "{sampleEmptyArray}"
     Then "{val}" is empty
   # Contains assertions
 
   Scenario: Assert contains substring
-    Given "greeting" is "hello world"
+    Given I set "greeting" to "hello world"
     Then "{greeting}" contains "world"
 
   Scenario: Assert string contains one of
-    Given "status" is "status_active"
+    Given I set "status" to "status_active"
     Then "{status}" is a string containing one of
       | value   |
       | active  |
@@ -107,13 +107,13 @@ Feature: Value assertions
     Then "{count}" should be less than "5"
 
   Scenario: Compare with variable threshold
-    Given "val" is "{5}"
-    And "threshold" is "{3}"
+    Given I set "val" to "{5}"
+    And I set "threshold" to "{3}"
     Then "{val}" should be greater than "{threshold}"
 
   Scenario: Compare less than with variable
-    Given "val" is "{2}"
-    And "max" is "{10}"
+    Given I set "val" to "{2}"
+    And I set "max" to "{10}"
     Then "{val}" should be less than "{max}"
   # Error assertions
 
@@ -123,11 +123,11 @@ Feature: Value assertions
     Then "{count}" is not an error
 
   Scenario: Assert calling null as a function gives an error
-    Given "fn" is "{null}"
+    Given I set "fn" to "{null}"
     When I call "{fn}"
     Then "{result}" is an error
 
   Scenario: Assert is an error with specific message
-    Given "errorFn" is "{errorThrowingFn}"
+    Given I set "errorFn" to "{errorThrowingFn}"
     When I call "{errorFn}"
     Then "{result}" is an error with message "Test error message"
