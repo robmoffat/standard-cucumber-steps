@@ -115,6 +115,10 @@ public class GenericSteps {
         // Java-specific: native array for toList coverage
         world.set("nativeIntArray", new int[] { 10, 20, 30 });
         world.set("nativeStringArray", new String[] { "alpha", "beta", "gamma" });
+        
+        // Java-specific: typed values for isMoreSpecific tests
+        world.set("integerValue", Integer.valueOf(42));
+        world.set("doubleValue", Double.valueOf(3.14));
     }
     
     // Functional interfaces for multi-arg functions
@@ -145,12 +149,15 @@ public class GenericSteps {
         // Methods with primitive parameters for wrap() coverage
         public int AddInt(int n) { return value + n; }
         public long AddLong(long n) { return value + n; }
-        public double AddDouble(double n) { return value + n; }
-        public float AddFloat(float n) { return value + n; }
         public boolean IsPositive(int n) { return n > 0; }
         public short AddShort(short n) { return (short)(value + n); }
         public byte AddByte(byte n) { return (byte)(value + n); }
+        
+        // Methods without int overloads for unambiguous double/float/char coverage
+        public double MultiplyByDouble(double n) { return value * n; }
+        public float MultiplyByFloat(float n) { return value * n; }
         public char NextChar(char c) { return (char)(c + 1); }
+        public boolean IsEven(boolean flag) { return flag && (value % 2 == 0); }
     }
 
     // ========== Method Invocation (Object.method) Steps ==========
@@ -694,8 +701,54 @@ public class GenericSteps {
             throw new NoSuchMethodException("Method not found: " + methodName);
         }
         method.setAccessible(true);
-        Object result = method.invoke(target, args);
+        // Convert args to match parameter types
+        Object[] convertedArgs = convertArgs(method.getParameterTypes(), args);
+        Object result = method.invoke(target, convertedArgs);
         return resolvePromise(result);
+    }
+
+    private Object[] convertArgs(Class<?>[] paramTypes, Object[] args) {
+        Object[] converted = new Object[args.length];
+        for (int i = 0; i < args.length; i++) {
+            converted[i] = convertArg(paramTypes[i], args[i]);
+        }
+        return converted;
+    }
+
+    private Object convertArg(Class<?> targetType, Object arg) {
+        if (arg == null) return null;
+        
+        // If already compatible, return as-is
+        if (wrap(targetType).isAssignableFrom(arg.getClass())) {
+            return arg;
+        }
+        
+        // Handle numeric conversions
+        Number num = null;
+        if (arg instanceof Number) {
+            num = (Number) arg;
+        } else if (arg instanceof String) {
+            try {
+                num = Double.parseDouble((String) arg);
+            } catch (NumberFormatException e) {
+                // Not a number, check for char
+                if ((targetType == char.class || targetType == Character.class) && ((String) arg).length() == 1) {
+                    return ((String) arg).charAt(0);
+                }
+                return arg;
+            }
+        }
+        
+        if (num != null) {
+            if (targetType == int.class || targetType == Integer.class) return num.intValue();
+            if (targetType == long.class || targetType == Long.class) return num.longValue();
+            if (targetType == double.class || targetType == Double.class) return num.doubleValue();
+            if (targetType == float.class || targetType == Float.class) return num.floatValue();
+            if (targetType == short.class || targetType == Short.class) return num.shortValue();
+            if (targetType == byte.class || targetType == Byte.class) return num.byteValue();
+        }
+        
+        return arg;
     }
 
     public static Method findMethod(Class<?> targetClass, String name, Object... args) {
@@ -719,9 +772,37 @@ public class GenericSteps {
                 if (paramTypes[i].isPrimitive()) return false;
                 continue;
             }
-            if (!wrap(paramTypes[i]).isAssignableFrom(args[i].getClass())) return false;
+            Class<?> wrapped = wrap(paramTypes[i]);
+            Class<?> argClass = args[i].getClass();
+            // Direct assignment compatibility
+            if (wrapped.isAssignableFrom(argClass)) continue;
+            // Handle numeric conversions: any Number can be converted to any numeric primitive
+            if (args[i] instanceof Number && isNumericType(paramTypes[i])) continue;
+            // Handle String to numeric conversion
+            if (args[i] instanceof String && isNumericType(paramTypes[i])) {
+                try {
+                    Double.parseDouble((String) args[i]);
+                    continue;
+                } catch (NumberFormatException e) {
+                    return false;
+                }
+            }
+            // Handle String to char conversion
+            if (args[i] instanceof String && (paramTypes[i] == char.class || paramTypes[i] == Character.class)) {
+                if (((String) args[i]).length() == 1) continue;
+            }
+            return false;
         }
         return true;
+    }
+
+    private static boolean isNumericType(Class<?> type) {
+        return type == int.class || type == Integer.class ||
+               type == long.class || type == Long.class ||
+               type == double.class || type == Double.class ||
+               type == float.class || type == Float.class ||
+               type == short.class || type == Short.class ||
+               type == byte.class || type == Byte.class;
     }
 
     private static boolean isMoreSpecific(Class<?>[] a, Class<?>[] b) {
