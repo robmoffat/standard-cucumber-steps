@@ -119,23 +119,6 @@ func NewPropsWorld() *PropsWorld {
 	}
 }
 
-// formatValueForComparison formats a value for display
-func formatValueForComparison(value interface{}) string {
-	if value == nil {
-		return "null"
-	}
-	v := reflect.ValueOf(value)
-	switch v.Kind() {
-	case reflect.Map, reflect.Slice, reflect.Array, reflect.Struct:
-		if jsonBytes, err := json.MarshalIndent(value, "", "  "); err == nil {
-			return string(jsonBytes)
-		}
-		return fmt.Sprintf("%+v", value)
-	default:
-		return fmt.Sprintf("%v (type: %T)", value, value)
-	}
-}
-
 // HandleResolve resolves variables and literals from string references.
 func (pw *PropsWorld) HandleResolve(name string) interface{} {
 	if strings.HasPrefix(name, "{") && strings.HasSuffix(name, "}") && strings.Count(name, "{") == 1 {
@@ -334,22 +317,6 @@ func (pw *PropsWorld) handleMethodResultsSync(results []reflect.Value) {
 	}
 }
 
-func handleMethodResultsAsync(results []reflect.Value) (interface{}, error) {
-	if len(results) == 0 {
-		return nil, nil
-	}
-	if len(results) > 1 {
-		if err, ok := results[len(results)-1].Interface().(error); ok && err != nil {
-			return nil, err
-		}
-	}
-	result := results[0].Interface()
-	if err, ok := result.(error); ok {
-		return nil, err
-	}
-	return result, nil
-}
-
 func parseNumber(val interface{}) (float64, error) {
 	switch v := val.(type) {
 	case int:
@@ -441,6 +408,25 @@ func (pw *PropsWorld) iCallObjectWithMethodWithThreeParameters(field, fnName, pa
 	return nil
 }
 
+func (pw *PropsWorld) iCallObjectWithMethodWithFourParameters(field, fnName, param1, param2, param3, param4 string) error {
+	obj := pw.HandleResolve(field)
+	objValue := reflect.ValueOf(obj)
+	method := objValue.MethodByName(fnName)
+	if !method.IsValid() {
+		pw.Props["result"] = fmt.Errorf("method %s not found", fnName)
+		return nil
+	}
+	defer pw.recoverFromMethodCallPanic(field, fnName, param1, param2, param3, param4)
+	results := method.Call([]reflect.Value{
+		reflect.ValueOf(pw.HandleResolve(param1)),
+		reflect.ValueOf(pw.HandleResolve(param2)),
+		reflect.ValueOf(pw.HandleResolve(param3)),
+		reflect.ValueOf(pw.HandleResolve(param4)),
+	})
+	pw.handleMethodResultsSync(results)
+	return nil
+}
+
 func (pw *PropsWorld) iCallFunctionWithParameter(fnName, param string) error {
 	pw.callFunction(pw.HandleResolve(fnName), pw.HandleResolve(param))
 	return nil
@@ -453,6 +439,11 @@ func (pw *PropsWorld) iCallFunctionWithTwoParameters(fnName, param1, param2 stri
 
 func (pw *PropsWorld) iCallFunctionWithThreeParameters(fnName, param1, param2, param3 string) error {
 	pw.callFunction(pw.HandleResolve(fnName), pw.HandleResolve(param1), pw.HandleResolve(param2), pw.HandleResolve(param3))
+	return nil
+}
+
+func (pw *PropsWorld) iCallFunctionWithFourParameters(fnName, param1, param2, param3, param4 string) error {
+	pw.callFunction(pw.HandleResolve(fnName), pw.HandleResolve(param1), pw.HandleResolve(param2), pw.HandleResolve(param3), pw.HandleResolve(param4))
 	return nil
 }
 
@@ -765,20 +756,21 @@ func (pw *PropsWorld) IsAnAsyncFunctionReturning(fnName, field string) error {
 	return nil
 }
 
+// Setter step: I set "field" to "value"
+func (pw *PropsWorld) iSetFieldTo(field, value string) error {
+	pw.Props[field] = pw.HandleResolve(value)
+	return nil
+}
+
+// Assertion step: "{field}" is "value"
 func (pw *PropsWorld) fieldIs(field, value string) error {
-	resolved := pw.HandleResolve(value)
-	// If field has {braces}, it's a prop lookup — assertion mode
-	// If field is a bare string, it's a prop key — setter mode
-	if strings.HasPrefix(field, "{") && strings.HasSuffix(field, "}") {
-		actual := pw.HandleResolve(field)
-		actualStr := fmt.Sprintf("%v", actual)
-		expectedStr := fmt.Sprintf("%v", resolved)
-		if actualStr != expectedStr {
-			return fmt.Errorf("expected %s to equal '%s', got '%s'", field, expectedStr, actualStr)
-		}
-		return nil
+	actual := pw.HandleResolve(field)
+	expected := pw.HandleResolve(value)
+	actualStr := fmt.Sprintf("%v", actual)
+	expectedStr := fmt.Sprintf("%v", expected)
+	if actualStr != expectedStr {
+		return fmt.Errorf("expected %s to equal '%s', got '%s'", field, expectedStr, actualStr)
 	}
-	pw.Props[field] = resolved
 	return nil
 }
 
@@ -812,6 +804,22 @@ func (pw *PropsWorld) iWaitForFunctionWithParameter(functionName, param1 string)
 func (pw *PropsWorld) iWaitForFunctionWithTwoParameters(functionName, param1, param2 string) error {
 	jobName := "temp_" + functionName
 	if err := pw.iStartJobWithTwoParameters(functionName, param1, param2, jobName); err != nil {
+		return err
+	}
+	return pw.iWaitForJob(jobName)
+}
+
+func (pw *PropsWorld) iWaitForFunctionWithThreeParameters(functionName, param1, param2, param3 string) error {
+	jobName := "temp_" + functionName
+	if err := pw.iStartJobWithThreeParameters(functionName, param1, param2, param3, jobName); err != nil {
+		return err
+	}
+	return pw.iWaitForJob(jobName)
+}
+
+func (pw *PropsWorld) iWaitForFunctionWithFourParameters(functionName, param1, param2, param3, param4 string) error {
+	jobName := "temp_" + functionName
+	if err := pw.iStartJobWithFourParameters(functionName, param1, param2, param3, param4, jobName); err != nil {
 		return err
 	}
 	return pw.iWaitForJob(jobName)
@@ -874,6 +882,51 @@ func (pw *PropsWorld) iStartJobWithTwoParameters(functionName, param1, param2, j
 			return nil, fmt.Errorf("%s is not a callable function with 2 parameters", functionName)
 		}
 		result := fn(fmt.Sprintf("%v", resolvedParam1), fmt.Sprintf("%v", resolvedParam2))
+		if err, ok := result.(error); ok {
+			return nil, err
+		}
+		return result, nil
+	})
+	return nil
+}
+
+func (pw *PropsWorld) iStartJobWithThreeParameters(functionName, param1, param2, param3, jobName string) error {
+	pw.AsyncManager.StartTask(jobName, func(ctx context.Context) (interface{}, error) {
+		funcValue := pw.HandleResolve(functionName)
+		if funcValue == nil {
+			return nil, fmt.Errorf("function %s not found", functionName)
+		}
+		resolvedParam1 := pw.HandleResolve(param1)
+		resolvedParam2 := pw.HandleResolve(param2)
+		resolvedParam3 := pw.HandleResolve(param3)
+		fn, ok := funcValue.(func(string, string, string) interface{})
+		if !ok {
+			return nil, fmt.Errorf("%s is not a callable function with 3 parameters", functionName)
+		}
+		result := fn(fmt.Sprintf("%v", resolvedParam1), fmt.Sprintf("%v", resolvedParam2), fmt.Sprintf("%v", resolvedParam3))
+		if err, ok := result.(error); ok {
+			return nil, err
+		}
+		return result, nil
+	})
+	return nil
+}
+
+func (pw *PropsWorld) iStartJobWithFourParameters(functionName, param1, param2, param3, param4, jobName string) error {
+	pw.AsyncManager.StartTask(jobName, func(ctx context.Context) (interface{}, error) {
+		funcValue := pw.HandleResolve(functionName)
+		if funcValue == nil {
+			return nil, fmt.Errorf("function %s not found", functionName)
+		}
+		resolvedParam1 := pw.HandleResolve(param1)
+		resolvedParam2 := pw.HandleResolve(param2)
+		resolvedParam3 := pw.HandleResolve(param3)
+		resolvedParam4 := pw.HandleResolve(param4)
+		fn, ok := funcValue.(func(string, string, string, string) interface{})
+		if !ok {
+			return nil, fmt.Errorf("%s is not a callable function with 4 parameters", functionName)
+		}
+		result := fn(fmt.Sprintf("%v", resolvedParam1), fmt.Sprintf("%v", resolvedParam2), fmt.Sprintf("%v", resolvedParam3), fmt.Sprintf("%v", resolvedParam4))
 		if err, ok := result.(error); ok {
 			return nil, err
 		}
@@ -952,15 +1005,17 @@ func tableToMaps(table *godog.Table) []map[string]string {
 func (pw *PropsWorld) RegisterSteps(s *godog.ScenarioContext) {
 	// Function call — direct
 	s.Step(`^I call "([^"]*)"$`, pw.iCallFunction)
-	s.Step(`^I call "([^"]*)" with parameter "([^"]*)"$`, pw.iCallFunctionWithParameter)
-	s.Step(`^I call "([^"]*)" with parameters "([^"]*)" and "([^"]*)"$`, pw.iCallFunctionWithTwoParameters)
-	s.Step(`^I call "([^"]*)" with parameters "([^"]*)" and "([^"]*)" and "([^"]*)"$`, pw.iCallFunctionWithThreeParameters)
+	s.Step(`^I call "([^"]*)" using argument "([^"]*)"$`, pw.iCallFunctionWithParameter)
+	s.Step(`^I call "([^"]*)" using arguments "([^"]*)" and "([^"]*)"$`, pw.iCallFunctionWithTwoParameters)
+	s.Step(`^I call "([^"]*)" using arguments "([^"]*)", "([^"]*)", and "([^"]*)"$`, pw.iCallFunctionWithThreeParameters)
+	s.Step(`^I call "([^"]*)" using arguments "([^"]*)", "([^"]*)", "([^"]*)", and "([^"]*)"$`, pw.iCallFunctionWithFourParameters)
 
 	// Function call — object methods
 	s.Step(`^I call "([^"]*)" with "([^"]*)"$`, pw.iCallObjectWithMethod)
-	s.Step(`^I call "([^"]*)" with "([^"]*)" with parameter "([^"]*)"$`, pw.iCallObjectWithMethodWithParameter)
-	s.Step(`^I call "([^"]*)" with "([^"]*)" with parameters "([^"]*)" and "([^"]*)"$`, pw.iCallObjectWithMethodWithTwoParameters)
-	s.Step(`^I call "([^"]*)" with "([^"]*)" with parameters "([^"]*)" and "([^"]*)" and "([^"]*)"$`, pw.iCallObjectWithMethodWithThreeParameters)
+	s.Step(`^I call "([^"]*)" with "([^"]*)" using argument "([^"]*)"$`, pw.iCallObjectWithMethodWithParameter)
+	s.Step(`^I call "([^"]*)" with "([^"]*)" using arguments "([^"]*)" and "([^"]*)"$`, pw.iCallObjectWithMethodWithTwoParameters)
+	s.Step(`^I call "([^"]*)" with "([^"]*)" using arguments "([^"]*)", "([^"]*)", and "([^"]*)"$`, pw.iCallObjectWithMethodWithThreeParameters)
+	s.Step(`^I call "([^"]*)" with "([^"]*)" using arguments "([^"]*)", "([^"]*)", "([^"]*)", and "([^"]*)"$`, pw.iCallObjectWithMethodWithFourParameters)
 
 	// Variable management
 	s.Step(`^I refer to "([^"]*)" as "([^"]*)"$`, pw.IReferToAs)
@@ -983,6 +1038,7 @@ func (pw *PropsWorld) RegisterSteps(s *godog.ScenarioContext) {
 	s.Step(`^"([^"]*)" is false$`, pw.fieldIsFalse)
 	s.Step(`^"([^"]*)" is empty$`, pw.fieldIsEmpty)
 	s.Step(`^"([^"]*)" is "([^"]*)"$`, pw.fieldIs)
+	s.Step(`^I set "([^"]*)" to "([^"]*)"$`, pw.iSetFieldTo)
 	s.Step(`^"([^"]*)" is an error with message "([^"]*)"$`, pw.fieldIsErrorWithMessage)
 	s.Step(`^"([^"]*)" is an error$`, pw.fieldIsError)
 	s.Step(`^"([^"]*)" is not an error$`, pw.fieldIsNotError)
@@ -998,8 +1054,10 @@ func (pw *PropsWorld) RegisterSteps(s *godog.ScenarioContext) {
 
 	// Async job — start
 	s.Step(`^I start "([^"]*)" as "([^"]*)"$`, pw.iStartJob)
-	s.Step(`^I start "([^"]*)" with parameter "([^"]*)" as "([^"]*)"$`, pw.iStartJobWithParameter)
-	s.Step(`^I start "([^"]*)" with parameters "([^"]*)" and "([^"]*)" as "([^"]*)"$`, pw.iStartJobWithTwoParameters)
+	s.Step(`^I start "([^"]*)" using argument "([^"]*)" as "([^"]*)"$`, pw.iStartJobWithParameter)
+	s.Step(`^I start "([^"]*)" using arguments "([^"]*)" and "([^"]*)" as "([^"]*)"$`, pw.iStartJobWithTwoParameters)
+	s.Step(`^I start "([^"]*)" using arguments "([^"]*)", "([^"]*)", and "([^"]*)" as "([^"]*)"$`, pw.iStartJobWithThreeParameters)
+	s.Step(`^I start "([^"]*)" using arguments "([^"]*)", "([^"]*)", "([^"]*)", and "([^"]*)" as "([^"]*)"$`, pw.iStartJobWithFourParameters)
 
 	// Async job — wait
 	s.Step(`^I wait for job "([^"]*)"$`, pw.iWaitForJob)
@@ -1008,6 +1066,8 @@ func (pw *PropsWorld) RegisterSteps(s *godog.ScenarioContext) {
 	// Async — direct function call
 	s.Step(`^I wait for "([^"]*)"$`, pw.iWaitForFunction)
 	s.Step(`^I wait for "([^"]*)" within "([^"]*)" ms$`, pw.iWaitForFunctionWithTimeout)
-	s.Step(`^I wait for "([^"]*)" with parameter "([^"]*)"$`, pw.iWaitForFunctionWithParameter)
-	s.Step(`^I wait for "([^"]*)" with parameters "([^"]*)" and "([^"]*)"$`, pw.iWaitForFunctionWithTwoParameters)
+	s.Step(`^I wait for "([^"]*)" using argument "([^"]*)"$`, pw.iWaitForFunctionWithParameter)
+	s.Step(`^I wait for "([^"]*)" using arguments "([^"]*)" and "([^"]*)"$`, pw.iWaitForFunctionWithTwoParameters)
+	s.Step(`^I wait for "([^"]*)" using arguments "([^"]*)", "([^"]*)", and "([^"]*)"$`, pw.iWaitForFunctionWithThreeParameters)
+	s.Step(`^I wait for "([^"]*)" using arguments "([^"]*)", "([^"]*)", "([^"]*)", and "([^"]*)"$`, pw.iWaitForFunctionWithFourParameters)
 }

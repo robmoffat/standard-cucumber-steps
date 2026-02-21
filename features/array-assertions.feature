@@ -1,35 +1,85 @@
-Feature: Array and numeric assertion steps
+Feature: Array and object assertions
+  # Array of objects - exact match
 
-  # Array-specific steps (is an array of objects/strings) require language-specific
-  # @Before hooks to create test arrays in props. These scenarios test the numeric
-  # and range assertions that support array-length verification.
+  Scenario: Array of objects with exact contents
+    Given "arrayMaker" is an async function returning "{sampleArray}"
+    When I wait for "{arrayMaker}"
+    Then "{result}" is an array of objects with the following contents
+      | name  | value |
+      | Alice |   100 |
+      | Bob   |   200 |
+  # Array of objects - partial match
 
-  Scenario: Counter reflects number of calls
-    Given "handler" is a invocation counter into "count"
-    When I call "{handler}"
-    And I call "{handler}"
-    And I call "{handler}"
-    Then "{count}" is "3"
+  Scenario: Array of objects with at least contents
+    Given "arrayMaker" is an async function returning "{sampleArray}"
+    When I wait for "{arrayMaker}"
+    Then "{result}" is an array of objects with at least the following contents
+      | name  |
+      | Alice |
 
-  Scenario: Greater-than assertion
-    Given "handler" is a invocation counter into "count"
-    When I call "{handler}"
-    And I call "{handler}"
-    Then "{count}" should be greater than "1"
+  Scenario: Array contains at least specified rows
+    Given I set "testArray" to "{sampleArray}"
+    Then "{testArray}" is an array of objects with at least the following contents
+      | name  |
+      | Alice |
+  # Array of objects - exclusion match
 
-  Scenario: Less-than assertion
-    Given "handler" is a invocation counter into "count"
-    When I call "{handler}"
-    Then "{count}" should be less than "5"
+  Scenario: Array of objects which doesn't contain
+    Given "arrayMaker" is an async function returning "{sampleArray}"
+    When I wait for "{arrayMaker}"
+    Then "{result}" is an array of objects which doesn't contain any of
+      | name    |
+      | Charlie |
+      | David   |
+  # Array length assertions
 
-  Scenario: String contains check supports substring matching
-    Given "message" is "items: [apple, banana, cherry]"
-    Then "{message}" contains "banana"
+  Scenario: Array length assertion
+    Given "arrayMaker" is an async function returning "{sampleArray}"
+    When I wait for "{arrayMaker}"
+    Then "{result}" is an array of objects with length "2"
 
-  Scenario: String contains one of
-    Given "status" is "COMPLETED_WITH_ERRORS"
-    Then "{status}" is a string containing one of
-      | value     |
-      | COMPLETED |
-      | PENDING   |
-      | FAILED    |
+  Scenario: Array has specific length
+    Given I set "arr" to "{sampleArray}"
+    Then "{arr}" is an array of objects with length "2"
+
+  Scenario: Empty array has length zero
+    Given I set "arr" to "{sampleEmptyArray}"
+    Then "{arr}" is an array of objects with length "0"
+  # Array of strings
+
+  Scenario: Array of strings assertion
+    Given "arrayMaker" is an async function returning "{sampleStringArray}"
+    When I wait for "{arrayMaker}"
+    Then "{result}" is an array of strings with the following values
+      | value |
+      | one   |
+      | two   |
+      | three |
+
+  Scenario: String array with expected values
+    Given I set "arr" to "{sampleStringArray}"
+    Then "{arr}" is an array of strings with the following values
+      | value |
+      | one   |
+      | two   |
+      | three |
+  # Object assertions
+
+  Scenario: Object with contents assertion
+    Given "objectMaker" is an async function returning "{sampleObject}"
+    When I wait for "{objectMaker}"
+    Then "{result}" is an object with the following contents
+      | name | age |
+      | John |  30 |
+
+  Scenario: Object has expected properties
+    Given I set "obj" to "{sampleObject}"
+    Then "{obj}" is an object with the following contents
+      | name | age |
+      | John |  30 |
+  # Empty array assertion
+
+  Scenario: Empty array assertion
+    Given "emptyMaker" is an async function returning "{sampleEmptyArray}"
+    When I wait for "{emptyMaker}"
+    Then "{result}" is empty

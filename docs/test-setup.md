@@ -1,6 +1,8 @@
 # Test Setup Steps
 
-Steps that create test objects (callable functions, counters, delays) in props, for use by other steps in the same scenario. These are the building blocks for language-agnostic testing without needing external dependencies.
+Steps that create test objects (callable functions, counters, delays) in props, for use by other steps in the same scenario. 
+
+These are mainly for writing tests of STS itself, but you may find them handy.
 
 ---
 
@@ -25,18 +27,36 @@ Given "callback" is a invocation counter into "callbackCount"
 
 ---
 
-## `"fn" is a function which returns a promise of "{value}"`
+## `"fn" is an async function returning "{value}"`
 
 Creates an async function (stored as `fn`) that, when called, resolves to the value of `{value}` at the time the step runs.
 
 ```gherkin
 Given "myVar" is "hello"
-And "fn" is a function which returns a promise of "{myVar}"
-When the promise "{fn}" should resolve
+And "fn" is an async function returning "{myVar}"
+When I wait for "{fn}"
 Then "{result}" is "hello"
 ```
 
-Used together with [async steps](async.md) to test promise/future resolution.
+Used together with [async steps](async.md) to test async completion.
+
+---
+
+## `"fn" is an async function returning "{value}" after "{ms}" ms`
+
+Creates an async function with a built-in delay. When called, it waits for the specified milliseconds before resolving to the value. Useful for testing timeout scenarios.
+
+```gherkin
+Scenario: Function completes before timeout
+  Given "fn" is an async function returning "success" after "50" ms
+  When I wait for "{fn}" within "1000" ms
+  Then "{result}" is "success"
+
+Scenario: Function times out
+  Given "slowFn" is an async function returning "too late" after "5000" ms
+  When I wait for "{slowFn}" within "100" ms
+  Then "{result}" is an error
+```
 
 ---
 

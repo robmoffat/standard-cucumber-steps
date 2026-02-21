@@ -55,16 +55,24 @@ Then "{result}" is "timed-result"
 
 ---
 
-## `I wait for "{fn}" with parameter "{p1}"`
+## `I wait for "{fn}" using argument "{p1}"`
 
 ```gherkin
-When I wait for "{processor}" with parameter "{inputData}"
+When I wait for "{processor}" using argument "{inputData}"
 Then "{result}" is not an error
 ```
 
 ---
 
-## `I wait for "{fn}" with parameters "{p1}" and "{p2}"`
+## `I wait for "{fn}" using arguments "{p1}" and "{p2}"`
+
+---
+
+## `I wait for "{fn}" using arguments "{p1}", "{p2}", and "{p3}"`
+
+---
+
+## `I wait for "{fn}" using arguments "{p1}", "{p2}", "{p3}", and "{p4}"`
 
 ---
 
@@ -80,11 +88,19 @@ Then "{count}" is "1"
 
 ---
 
-## `I start "{fn}" with parameter "{p1}" as "jobName"`
+## `I start "{fn}" using argument "{p1}" as "jobName"`
 
 ---
 
-## `I start "{fn}" with parameters "{p1}" and "{p2}" as "jobName"`
+## `I start "{fn}" using arguments "{p1}" and "{p2}" as "jobName"`
+
+---
+
+## `I start "{fn}" using arguments "{p1}", "{p2}", and "{p3}" as "jobName"`
+
+---
+
+## `I start "{fn}" using arguments "{p1}", "{p2}", "{p3}", and "{p4}" as "jobName"`
 
 ---
 

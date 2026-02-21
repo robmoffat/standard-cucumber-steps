@@ -24,7 +24,7 @@ export function setupGenericSteps() {
   });
 
   When(
-    'I call {string} with {string} with parameter {string}',
+    'I call {string} with {string} using argument {string}',
     async function (this: PropsWorld, field: string, fnName: string, param: string) {
       try {
         const object = handleResolve(field, this);
@@ -38,7 +38,7 @@ export function setupGenericSteps() {
   );
 
   When(
-    'I call {string} with {string} with parameters {string} and {string}',
+    'I call {string} with {string} using arguments {string} and {string}',
     async function (this: PropsWorld, field: string, fnName: string, param1: string, param2: string) {
       try {
         const object = handleResolve(field, this);
@@ -52,7 +52,7 @@ export function setupGenericSteps() {
   );
 
   When(
-    'I call {string} with {string} with parameters {string} and {string} and {string}',
+    'I call {string} with {string} using arguments {string}, {string}, and {string}',
     async function (
       this: PropsWorld,
       field: string,
@@ -77,6 +77,34 @@ export function setupGenericSteps() {
     }
   );
 
+  When(
+    'I call {string} with {string} using arguments {string}, {string}, {string}, and {string}',
+    async function (
+      this: PropsWorld,
+      field: string,
+      fnName: string,
+      param1: string,
+      param2: string,
+      param3: string,
+      param4: string
+    ) {
+      try {
+        const object = handleResolve(field, this);
+        const fn = object[fnName];
+        const result = await fn.call(
+          object,
+          handleResolve(param1, this),
+          handleResolve(param2, this),
+          handleResolve(param3, this),
+          handleResolve(param4, this)
+        );
+        this.props['result'] = result;
+      } catch (error) {
+        this.props['result'] = error;
+      }
+    }
+  );
+
   // ========== Direct Function Call Steps ==========
 
   When('I call {string}', async function (this: PropsWorld, fnName: string) {
@@ -90,7 +118,7 @@ export function setupGenericSteps() {
   });
 
   When(
-    'I call {string} with parameter {string}',
+    'I call {string} using argument {string}',
     async function (this: PropsWorld, fnName: string, param: string) {
       try {
         const fn = handleResolve(fnName, this);
@@ -103,7 +131,7 @@ export function setupGenericSteps() {
   );
 
   When(
-    'I call {string} with parameters {string} and {string}',
+    'I call {string} using arguments {string} and {string}',
     async function (this: PropsWorld, fnName: string, param1: string, param2: string) {
       try {
         const fn = handleResolve(fnName, this);
@@ -116,7 +144,7 @@ export function setupGenericSteps() {
   );
 
   When(
-    'I call {string} with parameters {string} and {string} and {string}',
+    'I call {string} using arguments {string}, {string}, and {string}',
     async function (this: PropsWorld, fnName: string, param1: string, param2: string, param3: string) {
       try {
         const fn = handleResolve(fnName, this);
@@ -124,6 +152,24 @@ export function setupGenericSteps() {
           handleResolve(param1, this),
           handleResolve(param2, this),
           handleResolve(param3, this)
+        );
+        this.props['result'] = result;
+      } catch (error) {
+        this.props['result'] = error;
+      }
+    }
+  );
+
+  When(
+    'I call {string} using arguments {string}, {string}, {string}, and {string}',
+    async function (this: PropsWorld, fnName: string, param1: string, param2: string, param3: string, param4: string) {
+      try {
+        const fn = handleResolve(fnName, this);
+        const result = await fn(
+          handleResolve(param1, this),
+          handleResolve(param2, this),
+          handleResolve(param3, this),
+          handleResolve(param4, this)
         );
         this.props['result'] = result;
       } catch (error) {
@@ -212,16 +258,16 @@ export function setupGenericSteps() {
     expect(handleResolve(field, this)).toHaveLength(0);
   });
 
-  Given('{string} is {string}', function (this: PropsWorld, field: string, value: string) {
-    const resolved = handleResolve(value, this);
-    if (field.startsWith('{') && field.endsWith('}')) {
-      // Assertion mode: Then "{count}" is "3"
-      const fVal = handleResolve(field, this);
-      expect('' + fVal).toEqual('' + resolved);
-    } else {
-      // Setter mode: Given "greeting" is "hello world"
-      this.props[field] = resolved;
-    }
+  // Setter step: Given I set "field" to "value"
+  Given('I set {string} to {string}', function (this: PropsWorld, field: string, value: string) {
+    this.props[field] = handleResolve(value, this);
+  });
+
+  // Assertion step: Then "{field}" is "value"
+  Then('{string} is {string}', function (this: PropsWorld, field: string, value: string) {
+    const actual = handleResolve(field, this);
+    const expected = handleResolve(value, this);
+    expect('' + actual).toEqual('' + expected);
   });
 
   // ========== Error Assertions ==========
@@ -287,6 +333,18 @@ export function setupGenericSteps() {
     }
   );
 
+  Given(
+    '{string} is an async function returning {string} after {string} ms',
+    function (this: PropsWorld, fnName: string, field: string, delayMs: string) {
+      const value = handleResolve(field, this);
+      const delay = parseInt(delayMs);
+      this.props[fnName] = async () => {
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return value;
+      };
+    }
+  );
+
   Given('we wait for a period of {string} ms', function (this: PropsWorld, ms: string) {
     return new Promise<void>((resolve, _reject) => {
       setTimeout(() => resolve(), parseInt(ms));
@@ -306,7 +364,7 @@ export function setupGenericSteps() {
   );
 
   When(
-    'I start {string} with parameter {string} as {string}',
+    'I start {string} using argument {string} as {string}',
     async function (this: PropsWorld, fnName: string, param: string, jobName: string) {
       const jobs: Map<string, Promise<any>> = this.props['_jobs'] ?? new Map();
       this.props['_jobs'] = jobs;
@@ -317,7 +375,7 @@ export function setupGenericSteps() {
   );
 
   When(
-    'I start {string} with parameters {string} and {string} as {string}',
+    'I start {string} using arguments {string} and {string} as {string}',
     async function (this: PropsWorld, fnName: string, param1: string, param2: string, jobName: string) {
       const jobs: Map<string, Promise<any>> = this.props['_jobs'] ?? new Map();
       this.props['_jobs'] = jobs;
@@ -325,6 +383,33 @@ export function setupGenericSteps() {
       const p1 = handleResolve(param1, this);
       const p2 = handleResolve(param2, this);
       jobs.set(jobName, Promise.resolve().then(() => fn(p1, p2)));
+    }
+  );
+
+  When(
+    'I start {string} using arguments {string}, {string}, and {string} as {string}',
+    async function (this: PropsWorld, fnName: string, param1: string, param2: string, param3: string, jobName: string) {
+      const jobs: Map<string, Promise<any>> = this.props['_jobs'] ?? new Map();
+      this.props['_jobs'] = jobs;
+      const fn = handleResolve(fnName, this);
+      const p1 = handleResolve(param1, this);
+      const p2 = handleResolve(param2, this);
+      const p3 = handleResolve(param3, this);
+      jobs.set(jobName, Promise.resolve().then(() => fn(p1, p2, p3)));
+    }
+  );
+
+  When(
+    'I start {string} using arguments {string}, {string}, {string}, and {string} as {string}',
+    async function (this: PropsWorld, fnName: string, param1: string, param2: string, param3: string, param4: string, jobName: string) {
+      const jobs: Map<string, Promise<any>> = this.props['_jobs'] ?? new Map();
+      this.props['_jobs'] = jobs;
+      const fn = handleResolve(fnName, this);
+      const p1 = handleResolve(param1, this);
+      const p2 = handleResolve(param2, this);
+      const p3 = handleResolve(param3, this);
+      const p4 = handleResolve(param4, this);
+      jobs.set(jobName, Promise.resolve().then(() => fn(p1, p2, p3, p4)));
     }
   );
 
@@ -390,7 +475,7 @@ export function setupGenericSteps() {
   );
 
   When(
-    'I wait for {string} with parameter {string}',
+    'I wait for {string} using argument {string}',
     async function (this: PropsWorld, fnName: string, param: string) {
       const fn = handleResolve(fnName, this);
       try {
@@ -403,11 +488,42 @@ export function setupGenericSteps() {
   );
 
   When(
-    'I wait for {string} with parameters {string} and {string}',
+    'I wait for {string} using arguments {string} and {string}',
     async function (this: PropsWorld, fnName: string, param1: string, param2: string) {
       const fn = handleResolve(fnName, this);
       try {
         const result = await fn(handleResolve(param1, this), handleResolve(param2, this));
+        this.props['result'] = result;
+      } catch (error) {
+        this.props['result'] = error;
+      }
+    }
+  );
+
+  When(
+    'I wait for {string} using arguments {string}, {string}, and {string}',
+    async function (this: PropsWorld, fnName: string, param1: string, param2: string, param3: string) {
+      const fn = handleResolve(fnName, this);
+      try {
+        const result = await fn(handleResolve(param1, this), handleResolve(param2, this), handleResolve(param3, this));
+        this.props['result'] = result;
+      } catch (error) {
+        this.props['result'] = error;
+      }
+    }
+  );
+
+  When(
+    'I wait for {string} using arguments {string}, {string}, {string}, and {string}',
+    async function (this: PropsWorld, fnName: string, param1: string, param2: string, param3: string, param4: string) {
+      const fn = handleResolve(fnName, this);
+      try {
+        const result = await fn(
+          handleResolve(param1, this),
+          handleResolve(param2, this),
+          handleResolve(param3, this),
+          handleResolve(param4, this)
+        );
         this.props['result'] = result;
       } catch (error) {
         this.props['result'] = error;

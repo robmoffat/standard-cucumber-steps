@@ -42,28 +42,28 @@ Feature: Bank account
 
   Scenario: Depositing money increases the balance
     Given "account" is set up as a new bank account
-    When I call "{account}" with "deposit" with parameter "100"
-    And I call "{account}" with "deposit" with parameter "50"
+    When I call "{account}" with "deposit" using argument "100"
+    And I call "{account}" with "deposit" using argument "50"
     And I call "{account}" with "getBalance"
     Then "{result}" is "150"
 
   Scenario: Withdrawing money decreases the balance
     Given "account" is set up as a new bank account
-    When I call "{account}" with "deposit" with parameter "200"
-    And I call "{account}" with "withdraw" with parameter "75"
+    When I call "{account}" with "deposit" using argument "200"
+    And I call "{account}" with "withdraw" using argument "75"
     And I call "{account}" with "getBalance"
     Then "{result}" is "125"
 
   Scenario: Withdrawing more than the balance throws an error
     Given "account" is set up as a new bank account
-    When I call "{account}" with "deposit" with parameter "50"
-    And I call "{account}" with "withdraw" with parameter "100"
+    When I call "{account}" with "deposit" using argument "50"
+    And I call "{account}" with "withdraw" using argument "100"
     Then "{result}" is an error
 
   Scenario: Transaction history records all operations
     Given "account" is set up as a new bank account
-    When I call "{account}" with "deposit" with parameter "100"
-    And I call "{account}" with "withdraw" with parameter "40"
+    When I call "{account}" with "deposit" using argument "100"
+    And I call "{account}" with "withdraw" using argument "40"
     And I call "{account}" with "getTransactions"
     Then "{result}" is an array of objects with the following contents
       | type     | amount | balance |
@@ -151,7 +151,7 @@ This means you can chain steps together, storing intermediate values and referri
 ```gherkin
 Given "initialBalance" is "{500}"
 And "account" is set up as a new bank account with balance "{initialBalance}"
-When I call "{account}" with "withdraw" with parameter "{initialBalance}"
+When I call "{account}" with "withdraw" using argument "{initialBalance}"
 Then "{result}" is an error
 ```
 
@@ -180,7 +180,7 @@ Then "{result}" is an array of objects with the following contents
 If the call throws an exception, the error is stored in `result` rather than propagating — so you can assert on failure scenarios without the test crashing:
 
 ```gherkin
-When I call "{account}" with "withdraw" with parameter "9999"
+When I call "{account}" with "withdraw" using argument "9999"
 Then "{result}" is an error
 Then "{result}" is an error with message "Insufficient funds"
 ```
@@ -195,17 +195,17 @@ If your API is asynchronous (returns a promise, `CompletableFuture`, Go channel,
 Scenario: Async deposit
   Given "account" is set up as a new bank account
   And "depositFn" is set up as an async deposit of "100" into "{account}"
-  When the promise "{depositFn}" should resolve
+  When I wait for "{depositFn}"
   Then "{result}" is "100"
 ```
 
-Or using the task pattern for long-running operations:
+Or using background jobs for long-running operations:
 
 ```gherkin
 Scenario: Batch processing
   Given "processor" is set up as a batch processor
-  When I start task "batchJob" by calling "{processor}"
-  And I wait for task "batchJob" to complete within "5000" ms
+  When I start "{processor}" as "batchJob"
+  And I wait for job "batchJob" within "5000" ms
   Then "{result}" is not an error
 ```
 
@@ -229,6 +229,20 @@ cd go && go test ./...
 dotnet test csharp/StandardCucumberSteps.csproj
 ```
 
+Here's what the test output looks like in each language:
+
+**TypeScript:**
+
+![TypeScript test output](images/typescript-example.png)
+
+**Java:**
+
+![Java test output](images/java-example.png)
+
+**Go:**
+
+![Go test output](images/go-example.png)
+
 ---
 
 ## Next steps
@@ -237,6 +251,6 @@ dotnet test csharp/StandardCucumberSteps.csproj
 - [Variables](variables.md) — storing and referencing props
 - [Assertions](assertions.md) — all assertion steps with examples
 - [Method Calls](method-calls.md) — calling functions and methods
-- [Async Steps](async.md) — promises, futures, and background tasks
+- [Async Steps](async.md) — async functions and background jobs
 - [Array Assertions](array-assertions.md) — matching arrays against data tables
 - [Test Setup](test-setup.md) — built-in test helpers (counters, async functions, delays)

@@ -35,7 +35,33 @@ public static class MatchingUtils
         if (world.Props.TryGetValue(path, out var direct))
             return direct;
 
-        // JSONPath against serialized props
+        // Try to resolve path with dots/brackets: "nested.name" or "arr[0].id"
+        var rootMatch = System.Text.RegularExpressions.Regex.Match(path, @"^([^\.\[]+)(.*)$");
+        if (rootMatch.Success)
+        {
+            var rootKey = rootMatch.Groups[1].Value;
+            var remainder = rootMatch.Groups[2].Value;
+            
+            if (world.Props.TryGetValue(rootKey, out var rootValue) && !string.IsNullOrEmpty(remainder))
+            {
+                // Use JSONPath on the root value
+                try
+                {
+                    var json = JsonConvert.SerializeObject(rootValue);
+                    var token = JToken.Parse(json);
+                    // Remainder starts with . or [ - adjust for JSONPath
+                    var jsonPath = remainder.StartsWith(".") ? "$" + remainder : "$" + remainder;
+                    var result = token.SelectToken(jsonPath);
+                    return result?.ToObject<object?>();
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+        }
+
+        // Fallback: JSONPath against entire serialized props
         try
         {
             var json = JsonConvert.SerializeObject(world.Props);
@@ -111,9 +137,17 @@ public static class MatchingUtils
     /// </summary>
     public static void MatchDataDoesntContain(PropsWorld world, IList<object?> actual, DataTable dt)
     {
-        var tableData = dt.CreateSet<Dictionary<string, string>>().ToList();
-        foreach (var unwantedRow in tableData)
+        var headers = dt.Header.ToList();
+        foreach (var row in dt.Rows)
         {
+            var unwantedRow = new Dictionary<string, string>();
+            for (int i = 0; i < headers.Count; i++)
+            {
+                unwantedRow[headers[i]] = row[i];
+            }
+            
+            if (unwantedRow.Count == 0) continue; // Skip empty rows
+            
             foreach (var item in actual)
             {
                 var found = DoesRowMatch(world, unwantedRow, item);
