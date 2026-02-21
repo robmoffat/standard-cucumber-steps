@@ -18,29 +18,33 @@ Then "{count}" is "1"
 
 ---
 
-## `I call "{fn}" with parameter "{p1}"` — one argument
+## `I call "{fn}" using argument "{p1}"` — one argument
 
 ```gherkin
-When I call "{myFunction}" with parameter "hello"
+When I call "{myFunction}" using argument "hello"
 Then "{result}" is "HELLO"
 ```
 
 ---
 
-## `I call "{fn}" with parameters "{p1}" and "{p2}"` — two arguments
+## `I call "{fn}" using arguments "{p1}" and "{p2}"` — two arguments
 
 ```gherkin
-When I call "{add}" with parameters "{x}" and "{y}"
+When I call "{add}" using arguments "{x}" and "{y}"
 Then "{result}" is "7"
 ```
 
 ---
 
-## `I call "{fn}" with parameters "{p1}" and "{p2}" and "{p3}"` — three arguments
+## `I call "{fn}" using arguments "{p1}", "{p2}", and "{p3}"` — three arguments
 
 ```gherkin
-When I call "{format}" with parameters "{template}" and "{name}" and "{value}"
+When I call "{format}" using arguments "{template}", "{name}", and "{value}"
 ```
+
+---
+
+## `I call "{fn}" using arguments "{p1}", "{p2}", "{p3}", and "{p4}"` — four arguments
 
 ---
 
@@ -55,24 +59,28 @@ Then "{result}" is not an error
 
 ---
 
-## `I call "{obj}" with "{method}" with parameter "{p1}"` — method with one argument
+## `I call "{obj}" with "{method}" using argument "{p1}"` — method with one argument
 
 ```gherkin
-When I call "{calculator}" with "add" with parameter "5"
+When I call "{calculator}" with "add" using argument "5"
 ```
 
 ---
 
-## `I call "{obj}" with "{method}" with parameters "{p1}" and "{p2}"` — method with two arguments
+## `I call "{obj}" with "{method}" using arguments "{p1}" and "{p2}"` — method with two arguments
 
 ```gherkin
-When I call "{calculator}" with "multiply" with parameters "3" and "4"
+When I call "{calculator}" with "multiply" using arguments "3" and "4"
 Then "{result}" is "12"
 ```
 
 ---
 
-## `I call "{obj}" with "{method}" with parameters "{p1}" and "{p2}" and "{p3}"` — method with three arguments
+## `I call "{obj}" with "{method}" using arguments "{p1}", "{p2}", and "{p3}"` — method with three arguments
+
+---
+
+## `I call "{obj}" with "{method}" using arguments "{p1}", "{p2}", "{p3}", and "{p4}"` — method with four arguments
 
 ---
 
@@ -101,7 +109,7 @@ Scenario: Call a function multiple times
 
 Scenario: Call a function that returns a value
   Given "myVar" is "hello"
-  And "fn" is a function which returns a promise of "{myVar}"
-  When the promise "{fn}" should resolve
+  And "fn" is an async function returning "{myVar}"
+  When I wait for "{fn}"
   Then "{result}" is "hello"
 ```

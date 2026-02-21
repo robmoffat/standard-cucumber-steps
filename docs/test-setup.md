@@ -25,18 +25,18 @@ Given "callback" is a invocation counter into "callbackCount"
 
 ---
 
-## `"fn" is a function which returns a promise of "{value}"`
+## `"fn" is an async function returning "{value}"`
 
 Creates an async function (stored as `fn`) that, when called, resolves to the value of `{value}` at the time the step runs.
 
 ```gherkin
 Given "myVar" is "hello"
-And "fn" is a function which returns a promise of "{myVar}"
-When the promise "{fn}" should resolve
+And "fn" is an async function returning "{myVar}"
+When I wait for "{fn}"
 Then "{result}" is "hello"
 ```
 
-Used together with [async steps](async.md) to test promise/future resolution.
+Used together with [async steps](async.md) to test async completion.
 
 ---
 

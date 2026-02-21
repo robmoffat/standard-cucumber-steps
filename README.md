@@ -52,8 +52,8 @@ We can write this feature file to test the implementation:
 ```gherkin
 Scenario: Depositing money increases the balance
   Given "account" is set up as a bank account with balance "0"
-  When I call "{account}" with "deposit" with parameter "100"
-  And I call "{account}" with "deposit" with parameter "50"
+  When I call "{account}" with "deposit" using argument "100"
+  And I call "{account}" with "deposit" using argument "50"
   And I call "{account}" with "getBalance"
   Then "{result}" is "150"
 ```
@@ -108,6 +108,24 @@ dotnet add package StandardCucumberSteps
 
 ---
 
+## See it in action
+
+The same feature files run across all supported languages, producing consistent test results:
+
+### TypeScript
+
+![TypeScript test output](docs/images/typescript-example.png)
+
+### Java
+
+![Java test output](docs/images/java-example.png)
+
+### Go
+
+![Go test output](docs/images/go-example.png)
+
+---
+
 ## Step Reference
 
 Full documentation with examples for each step group:
@@ -115,7 +133,7 @@ Full documentation with examples for each step group:
 - [Variables](docs/variables.md) — storing and referencing props, boolean/null/numeric literals
 - [Assertions](docs/assertions.md) — equality, contains, numeric comparisons, error assertions
 - [Method Calls](docs/method-calls.md) — calling functions and object methods
-- [Async Steps](docs/async.md) — promises, futures, and background tasks
+- [Async Steps](docs/async.md) — async functions and background jobs
 - [Array Assertions](docs/array-assertions.md) — matching arrays and objects against data tables
 - [Test Setup](docs/test-setup.md) — invocation counters, async functions, delays
 
@@ -144,7 +162,7 @@ Full documentation with examples for each step group:
 | `Then "{x}" is an error with message "msg"` | Assert error message |
 | `Then "{x}" is not an error` | Assert not an error |
 | `Then "{x}" contains "substring"` | Assert string contains |
-| `Then "{x}" is a string containing one of` | Assert contains one of (data table) |
+| `Then "{x}" is a string containing one of` | Assert contains one of *(+DataTable)* |
 | `Then "{x}" should be greater than "y"` | Numeric greater-than |
 | `Then "{x}" should be less than "y"` | Numeric less-than |
 
@@ -153,46 +171,51 @@ Full documentation with examples for each step group:
 | Step | Description |
 |------|-------------|
 | `When I call "{fn}"` | Call a no-arg function |
-| `When I call "{fn}" with parameter "{p1}"` | Call with one argument |
-| `When I call "{fn}" with parameters "{p1}" and "{p2}"` | Call with two arguments |
-| `When I call "{fn}" with parameters "{p1}" and "{p2}" and "{p3}"` | Call with three arguments |
+| `When I call "{fn}" using argument "{p1}"` | Call with one argument |
+| `When I call "{fn}" using arguments "{p1}" and "{p2}"` | Call with two arguments |
+| `When I call "{fn}" using arguments "{p1}", "{p2}", and "{p3}"` | Call with three arguments |
+| `When I call "{fn}" using arguments "{p1}", "{p2}", "{p3}", and "{p4}"` | Call with four arguments |
 | `When I call "{obj}" with "{method}"` | Call a method on an object |
-| `When I call "{obj}" with "{method}" with parameter "{p1}"` | Call method with one argument |
-| `When I call "{obj}" with "{method}" with parameters "{p1}" and "{p2}"` | Call method with two arguments |
-| `When I call "{obj}" with "{method}" with parameters "{p1}" and "{p2}" and "{p3}"` | Call method with three arguments |
+| `When I call "{obj}" with "{method}" using argument "{p1}"` | Call method with one argument |
+| `When I call "{obj}" with "{method}" using arguments "{p1}" and "{p2}"` | Call method with two arguments |
+| `When I call "{obj}" with "{method}" using arguments "{p1}", "{p2}", and "{p3}"` | Call method with three arguments |
+| `When I call "{obj}" with "{method}" using arguments "{p1}", "{p2}", "{p3}", and "{p4}"` | Call method with four arguments |
 
 ### [Async Steps](docs/async.md)
 
 | Step | Description |
 |------|-------------|
-| `When the promise "{fn}" should resolve` | Call fn and await the result |
-| `When the promise "{fn}" should resolve within 10 seconds` | Await with 10s timeout |
 | `When I wait for "{fn}"` | Call and await in one step |
-| `When I wait for "{fn}" with parameter "{p1}"` | Call with arg and await |
-| `When I wait for "{fn}" with parameters "{p1}" and "{p2}"` | Call with two args and await |
-| `When I start task "name" by calling "{fn}"` | Start async task in background |
-| `When I start task "name" by calling "{fn}" with parameter "{p1}"` | Start task with one arg |
-| `When I start task "name" by calling "{fn}" with parameters "{p1}" and "{p2}"` | Start task with two args |
-| `When I wait for task "name" to complete` | Wait for named task (30s timeout) |
-| `When I wait for task "name" to complete within "{ms}" ms` | Wait with custom timeout |
+| `When I wait for "{fn}" within "{ms}" ms` | Call and await with timeout |
+| `When I wait for "{fn}" using argument "{p1}"` | Call with arg and await |
+| `When I wait for "{fn}" using arguments "{p1}" and "{p2}"` | Call with two args and await |
+| `When I wait for "{fn}" using arguments "{p1}", "{p2}", and "{p3}"` | Call with three args and await |
+| `When I wait for "{fn}" using arguments "{p1}", "{p2}", "{p3}", and "{p4}"` | Call with four args and await |
+| `When I start "{fn}" as "jobName"` | Start async job in background |
+| `When I start "{fn}" using argument "{p1}" as "jobName"` | Start job with one arg |
+| `When I start "{fn}" using arguments "{p1}" and "{p2}" as "jobName"` | Start job with two args |
+| `When I start "{fn}" using arguments "{p1}", "{p2}", and "{p3}" as "jobName"` | Start job with three args |
+| `When I start "{fn}" using arguments "{p1}", "{p2}", "{p3}", and "{p4}" as "jobName"` | Start job with four args |
+| `When I wait for job "jobName"` | Wait for named job (30s timeout) |
+| `When I wait for job "jobName" within "{ms}" ms` | Wait with custom timeout |
 
 ### [Array Assertions](docs/array-assertions.md)
 
 | Step | Description |
 |------|-------------|
-| `Then "{x}" is an array of objects with the following contents` | Exact ordered match |
-| `Then "{x}" is an array of objects with at least the following contents` | Subset match |
-| `Then "{x}" is an array of objects which doesn't contain any of` | Negative match |
+| `Then "{x}" is an array of objects with the following contents` | Exact ordered match *(+DataTable)* |
+| `Then "{x}" is an array of objects with at least the following contents` | Subset match *(+DataTable)* |
+| `Then "{x}" is an array of objects which doesn't contain any of` | Negative match *(+DataTable)* |
 | `Then "{x}" is an array of objects with length "{n}"` | Length assertion |
-| `Then "{x}" is an array of strings with the following values` | String array match |
-| `Then "{x}" is an object with the following contents` | Single object field match |
+| `Then "{x}" is an array of strings with the following values` | String array match *(+DataTable)* |
+| `Then "{x}" is an object with the following contents` | Single object field match *(+DataTable)* |
 
 ### [Test Setup](docs/test-setup.md)
 
 | Step | Description |
 |------|-------------|
-| `Given "handler" is an invocation counter into "count"` | Create a counting callable |
-| `Given "fn" is a function which returns a promise of "{value}"` | Create an async function |
+| `Given "handler" is a invocation counter into "count"` | Create a counting callable |
+| `Given "fn" is an async function returning "{value}"` | Create an async function |
 | `Given we wait for a period of "{ms}" ms` | Sleep/delay |
 
 ---
