@@ -4,21 +4,22 @@ Reusable Cucumber step definitions for TypeScript, Java, Go, and C# — a single
 
 ## What this is
 
-Standard Cucumber Steps (SCS) is a library of pre-built Cucumber step definitions, available for TypeScript, Java, Go, and C#. Instead of writing `Given`, `When`, and `Then` glue code yourself, you import SCS and immediately get a rich vocabulary for calling functions, inspecting results, and asserting on data — all driven by a shared scenario language.
+The downside of BDD / Cucumber is having to maintain the step code - code that links step text (Given... When... Then...) to executable code in the tests themselves.
 
-The step definitions share a **common DSL**: the same `.feature` files run against all four language implementations without modification.
+Standard Cucumber Steps (SCS) is a library of pre-built Cucumber step definitions, available for TypeScript, Java, Go, and C#. Instead of writing `Given`, `When`, and `Then` glue code yourself, you import SCS and immediately get a rich vocabulary for calling functions, inspecting results, and asserting on data — all driven by a shared scenario language.
 
 ## Why this is useful
 
 Cucumber is a good fit for some testing problems and a poor fit for others. Before reaching for it, it is worth understanding the trade-offs:
-|-|-|-|
+
+| | | |
 |---|---|---|
 | Pro | **Readable by non-engineers** | Scenarios written in plain English can be reviewed and authored by product managers, QA analysts, and domain experts without reading code |
 | Pro | **Living documentation** | Feature files stay in sync with the implementation by definition — if a scenario fails, the documentation is wrong |
 | Pro | **Language-agnostic contracts** | The same `.feature` file can drive tests in TypeScript, Java, Go, and C# simultaneously, making it ideal for cross-language SDKs and generated code |
 | Pro | **Encourages separation of concerns** | The glue layer (step definitions) is forced to stay thin; business logic cannot hide inside tests |
 | Pro | **Reporting is excellent** | Step definitions pass and fail cleanly and you can see exactly how far a test has got without debugging it |
-| Con | **Higher maintenance overhead** | Each scenario needs corresponding step definitions; large test suites can become hard to manage without discipline.   This usually puts developers off using Cucumber as you feel you are writing everything twice. |
+| Con | **Higher maintenance overhead** | Each scenario needs corresponding step definitions; large test suites can become hard to manage without discipline. This usually puts developers off using Cucumber as you feel you are writing everything twice. |
 
 SCS addresses the maintenance cost directly: writing step definitions is repetitive boilerplate that every project reimplements. SCS does it once, correctly, across four languages.
 
@@ -28,17 +29,20 @@ This is especially valuable when:
 - **Migrating between languages** — the same feature files document the expected contract before, during, and after a migration.
 - **Adopting BDD on an existing codebase** — wire up your service with a few lines in a `@Before` hook and the step library covers the rest.
 - **Writing tests for generated code** — code generators that target multiple languages can share a single golden test suite.
+- **Working with agentic AI coding** - Feature files are an unusually clear form of instruction both for an AI coding agent and a human reviewer.   See [BDD and SCS for AI agentic coding](docs/agentic-coding.md) for a full discussion.
+
+---
 
 ## Quick example
 
-Let's say you have this interface (typescript):
+Let's say you have this interface (TypeScript):
 
 ```typescript
 interface BankAccount {
 
   deposit(amt: number)
 
-  getBalance() : number
+  getBalance(): number
 
 }
 ```
@@ -50,7 +54,7 @@ Scenario: Depositing money increases the balance
   Given "account" is set up as a bank account with balance "0"
   When I call "{account}" with "deposit" with parameter "100"
   And I call "{account}" with "deposit" with parameter "50"
-  Then I call "{account}" with "getBalance"
+  And I call "{account}" with "getBalance"
   Then "{result}" is "150"
 ```
 
@@ -121,7 +125,7 @@ Full documentation with examples for each step group:
 |------|-------------|
 | `Given "key" is "value"` | Store a string (or resolved literal) in props |
 | `Then "{key}" is "value"` | Assert prop equals value |
-| `When I refer to "{from}" as "to"` | Alias one prop to another |
+| `When I refer to "{from}" as "to"` | Alias (copy) one prop to another |
 | `{varName}` | Prop lookup in any step argument |
 | `{null}` `{true}` `{false}` `{42}` | Literal values |
 
@@ -187,7 +191,7 @@ Full documentation with examples for each step group:
 
 | Step | Description |
 |------|-------------|
-| `Given "handler" is a invocation counter into "count"` | Create a counting callable |
+| `Given "handler" is an invocation counter into "count"` | Create a counting callable |
 | `Given "fn" is a function which returns a promise of "{value}"` | Create an async function |
 | `Given we wait for a period of "{ms}" ms` | Sleep/delay |
 
@@ -196,6 +200,20 @@ Full documentation with examples for each step group:
 ## Shared Feature Files
 
 The `features/` directory contains `.feature` files that exercise every canonical step. Each language implementation points its test runner at this shared directory, so the same scenarios validate all four implementations.
+
+---
+
+## Used by
+
+SCS was extracted from three [FINOS](https://www.finos.org/) open-source projects.  Factoring it out into a shared library means each project gets consistent behaviour.
+
+| Project | Language | Description |
+|---------|----------|-------------|
+| [FDC3](https://github.com/finos/FDC3) | TypeScript | The FDC3 desktop interoperability standard; SCS drives its conformance test suite |
+| [FDC3-java-api](https://github.com/finos/fdc3-java-api) | Java | Java implementation of the FDC3 API; uses SCS to verify the Java bindings against the same feature files |
+| [ccc-cfi-compliance](https://github.com/finos-labs/ccc-cfi-compliance) | Go | FINOS Common Cloud Controls compliance testing; uses SCS as the generic step layer for cross-language contract verification |
+
+Each of these projects wires up its own domain objects in a single `@Before` hook and then delegates all step execution to SCS.
 
 ## License
 

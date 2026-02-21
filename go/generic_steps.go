@@ -108,7 +108,6 @@ type PropsWorld struct {
 	Props        map[string]interface{}
 	T            TestingT
 	AsyncManager *AsyncTaskManager
-	Attachments  []Attachment
 	mutex        sync.RWMutex
 }
 
@@ -117,35 +116,7 @@ func NewPropsWorld() *PropsWorld {
 	return &PropsWorld{
 		Props:        make(map[string]interface{}),
 		AsyncManager: NewAsyncTaskManager(),
-		Attachments:  make([]Attachment, 0),
 	}
-}
-
-// Attach adds an attachment to the current scenario
-func (pw *PropsWorld) Attach(name, mediaType string, data []byte) {
-	pw.mutex.Lock()
-	defer pw.mutex.Unlock()
-	pw.Attachments = append(pw.Attachments, Attachment{
-		Name:      name,
-		MediaType: mediaType,
-		Data:      data,
-	})
-}
-
-// GetAttachments returns a copy of the current attachments
-func (pw *PropsWorld) GetAttachments() []Attachment {
-	pw.mutex.RLock()
-	defer pw.mutex.RUnlock()
-	attachmentsCopy := make([]Attachment, len(pw.Attachments))
-	copy(attachmentsCopy, pw.Attachments)
-	return attachmentsCopy
-}
-
-// ClearAttachments clears all attachments
-func (pw *PropsWorld) ClearAttachments() {
-	pw.mutex.Lock()
-	defer pw.mutex.Unlock()
-	pw.Attachments = make([]Attachment, 0)
 }
 
 // formatValueForComparison formats a value for display
