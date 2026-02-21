@@ -1,7 +1,7 @@
 # TypeScript / Node
 node_modules/
 dist/
-.nyc_output/
+.c8_output/
 coverage/
 reports/
 

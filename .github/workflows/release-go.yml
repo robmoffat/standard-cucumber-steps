@@ -1,0 +1,46 @@
+name: Release Go
+
+on:
+  push:
+    tags:
+      - 'go/v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: go
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Run tests
+        run: go test -v ./...
+
+      - name: Verify module
+        run: go mod verify
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/go/}" >> $GITHUB_OUTPUT
+
+      # Go modules are automatically picked up by proxy.golang.org from GitHub tags
+      # This step just creates a GitHub Release for visibility
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Go ${{ steps.version.outputs.VERSION }}
+          body: |
+            ## Go Module Release
+
+            Install with:
+            ```
+            go get github.com/robmoffat/standard-cucumber-steps/go@${{ steps.version.outputs.VERSION }}
+            ```
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

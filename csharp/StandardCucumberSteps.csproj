@@ -5,11 +5,31 @@
     <PackageId>StandardCucumberSteps</PackageId>
     <Version>0.1.0</Version>
     <Authors>Rob Moffat</Authors>
-    <Description>Reusable Cucumber step definitions for C#</Description>
-    <IsTestProject>true</IsTestProject>
+    <Description>Reusable Cucumber step definitions for C# with Reqnroll</Description>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>StandardCucumberSteps</RootNamespace>
+
+    <!-- NuGet package metadata -->
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/robmoffat/standard-cucumber-steps</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/robmoffat/standard-cucumber-steps</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>cucumber;bdd;reqnroll;testing;step-definitions</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- Generate XML documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <!-- Test project settings - excluded from package -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>
