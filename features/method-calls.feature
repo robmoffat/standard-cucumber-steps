@@ -11,16 +11,16 @@ Feature: Method invocation steps
     And I call "{handler}"
     Then "{count}" is "2"
 
-  Scenario: Call a function that returns a value via promise resolve
+  Scenario: Call a function that returns a value
     Given "myVar" is "hello"
-    And "fn" is a function which returns a promise of "{myVar}"
-    When the promise "{fn}" should resolve
+    And "fn" is an async function returning "{myVar}"
+    When I wait for "{fn}"
     Then "{result}" is "hello"
 
-  Scenario: Call a function and resolve within 10 seconds
+  Scenario: Call a function and await with timeout
     Given "myVar" is "world"
-    And "fn" is a function which returns a promise of "{myVar}"
-    When the promise "{fn}" should resolve within 10 seconds
+    And "fn" is an async function returning "{myVar}"
+    When I wait for "{fn}" within "10000" ms
     Then "{result}" is "world"
 
   Scenario: Refer to a result by alias

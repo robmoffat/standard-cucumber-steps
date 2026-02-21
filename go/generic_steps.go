@@ -757,7 +757,7 @@ func (pw *PropsWorld) HandlerIsInvocationCounter(handlerName, field string) erro
 	return nil
 }
 
-func (pw *PropsWorld) FunctionReturnsPromiseOf(fnName, field string) error {
+func (pw *PropsWorld) IsAnAsyncFunctionReturning(fnName, field string) error {
 	value := pw.HandleResolve(field)
 	pw.Props[fnName] = func() interface{} {
 		return value
@@ -794,31 +794,31 @@ func (pw *PropsWorld) waitForPeriod(ms string) error {
 // Async step implementations
 
 func (pw *PropsWorld) iWaitForFunction(functionName string) error {
-	taskName := "temp_" + functionName
-	if err := pw.iStartTaskByCallingFunction(taskName, functionName); err != nil {
+	jobName := "temp_" + functionName
+	if err := pw.iStartJob(functionName, jobName); err != nil {
 		return err
 	}
-	return pw.iWaitForTaskToComplete(taskName)
+	return pw.iWaitForJob(jobName)
 }
 
 func (pw *PropsWorld) iWaitForFunctionWithParameter(functionName, param1 string) error {
-	taskName := "temp_" + functionName
-	if err := pw.iStartTaskByCallingFunctionWithParameter(taskName, functionName, param1); err != nil {
+	jobName := "temp_" + functionName
+	if err := pw.iStartJobWithParameter(functionName, param1, jobName); err != nil {
 		return err
 	}
-	return pw.iWaitForTaskToComplete(taskName)
+	return pw.iWaitForJob(jobName)
 }
 
 func (pw *PropsWorld) iWaitForFunctionWithTwoParameters(functionName, param1, param2 string) error {
-	taskName := "temp_" + functionName
-	if err := pw.iStartTaskByCallingFunctionWithTwoParameters(taskName, functionName, param1, param2); err != nil {
+	jobName := "temp_" + functionName
+	if err := pw.iStartJobWithTwoParameters(functionName, param1, param2, jobName); err != nil {
 		return err
 	}
-	return pw.iWaitForTaskToComplete(taskName)
+	return pw.iWaitForJob(jobName)
 }
 
-func (pw *PropsWorld) iStartTaskByCallingFunction(taskName, functionName string) error {
-	pw.AsyncManager.StartTask(taskName, func(ctx context.Context) (interface{}, error) {
+func (pw *PropsWorld) iStartJob(functionName, jobName string) error {
+	pw.AsyncManager.StartTask(jobName, func(ctx context.Context) (interface{}, error) {
 		funcValue := pw.HandleResolve(functionName)
 		if funcValue == nil {
 			return nil, fmt.Errorf("function %s not found", functionName)
@@ -841,8 +841,8 @@ func (pw *PropsWorld) iStartTaskByCallingFunction(taskName, functionName string)
 	return nil
 }
 
-func (pw *PropsWorld) iStartTaskByCallingFunctionWithParameter(taskName, functionName, param1 string) error {
-	pw.AsyncManager.StartTask(taskName, func(ctx context.Context) (interface{}, error) {
+func (pw *PropsWorld) iStartJobWithParameter(functionName, param1, jobName string) error {
+	pw.AsyncManager.StartTask(jobName, func(ctx context.Context) (interface{}, error) {
 		funcValue := pw.HandleResolve(functionName)
 		if funcValue == nil {
 			return nil, fmt.Errorf("function %s not found", functionName)
@@ -861,8 +861,8 @@ func (pw *PropsWorld) iStartTaskByCallingFunctionWithParameter(taskName, functio
 	return nil
 }
 
-func (pw *PropsWorld) iStartTaskByCallingFunctionWithTwoParameters(taskName, functionName, param1, param2 string) error {
-	pw.AsyncManager.StartTask(taskName, func(ctx context.Context) (interface{}, error) {
+func (pw *PropsWorld) iStartJobWithTwoParameters(functionName, param1, param2, jobName string) error {
+	pw.AsyncManager.StartTask(jobName, func(ctx context.Context) (interface{}, error) {
 		funcValue := pw.HandleResolve(functionName)
 		if funcValue == nil {
 			return nil, fmt.Errorf("function %s not found", functionName)
@@ -882,57 +882,53 @@ func (pw *PropsWorld) iStartTaskByCallingFunctionWithTwoParameters(taskName, fun
 	return nil
 }
 
-func (pw *PropsWorld) iWaitForTaskToComplete(taskName string) error {
-	err := pw.AsyncManager.WaitForTask(taskName, 30*time.Second)
+func (pw *PropsWorld) iWaitForJob(jobName string) error {
+	err := pw.AsyncManager.WaitForTask(jobName, 30*time.Second)
 	if err != nil {
 		pw.Props["result"] = err
-		pw.Props[taskName] = err
+		pw.Props[jobName] = err
 		return nil
 	}
-	result, err := pw.AsyncManager.GetTaskResult(taskName)
+	result, err := pw.AsyncManager.GetTaskResult(jobName)
 	if err != nil {
 		pw.Props["result"] = err
-		pw.Props[taskName] = err
+		pw.Props[jobName] = err
 	} else {
 		pw.Props["result"] = result
-		pw.Props[taskName] = result
+		pw.Props[jobName] = result
 	}
 	return nil
 }
 
-func (pw *PropsWorld) iWaitForTaskToCompleteWithinMs(taskName, timeoutMs string) error {
+func (pw *PropsWorld) iWaitForJobWithTimeout(jobName, timeoutMs string) error {
 	timeoutVal, err := strconv.Atoi(timeoutMs)
 	if err != nil {
 		return fmt.Errorf("invalid timeout: %s", timeoutMs)
 	}
 	timeout := time.Duration(timeoutVal) * time.Millisecond
-	err = pw.AsyncManager.WaitForTask(taskName, timeout)
+	err = pw.AsyncManager.WaitForTask(jobName, timeout)
 	if err != nil {
 		pw.Props["result"] = err
-		pw.Props[taskName] = err
+		pw.Props[jobName] = err
 		return nil
 	}
-	result, err := pw.AsyncManager.GetTaskResult(taskName)
+	result, err := pw.AsyncManager.GetTaskResult(jobName)
 	if err != nil {
 		pw.Props["result"] = err
-		pw.Props[taskName] = err
+		pw.Props[jobName] = err
 	} else {
 		pw.Props["result"] = result
-		pw.Props[taskName] = result
+		pw.Props[jobName] = result
 	}
 	return nil
 }
 
-func (pw *PropsWorld) thePromiseShouldResolve(functionName string) error {
-	return pw.iWaitForFunction(functionName)
-}
-
-func (pw *PropsWorld) thePromiseShouldResolveWithin10Seconds(functionName string) error {
-	taskName := "temp_" + functionName
-	if err := pw.iStartTaskByCallingFunction(taskName, functionName); err != nil {
+func (pw *PropsWorld) iWaitForFunctionWithTimeout(functionName, timeoutMs string) error {
+	jobName := "temp_" + functionName
+	if err := pw.iStartJob(functionName, jobName); err != nil {
 		return err
 	}
-	return pw.iWaitForTaskToCompleteWithinMs(taskName, "10000")
+	return pw.iWaitForJobWithTimeout(jobName, timeoutMs)
 }
 
 // tableToMaps converts a godog table to a slice of maps (skipping header row)
@@ -954,10 +950,6 @@ func tableToMaps(table *godog.Table) []map[string]string {
 
 // RegisterSteps registers all step definitions with the Godog suite
 func (pw *PropsWorld) RegisterSteps(s *godog.ScenarioContext) {
-	// Promise resolution
-	s.Step(`^the promise "([^"]*)" should resolve$`, pw.thePromiseShouldResolve)
-	s.Step(`^the promise "([^"]*)" should resolve within 10 seconds$`, pw.thePromiseShouldResolveWithin10Seconds)
-
 	// Function call — direct
 	s.Step(`^I call "([^"]*)"$`, pw.iCallFunction)
 	s.Step(`^I call "([^"]*)" with parameter "([^"]*)"$`, pw.iCallFunctionWithParameter)
@@ -1001,20 +993,21 @@ func (pw *PropsWorld) RegisterSteps(s *godog.ScenarioContext) {
 
 	// Test setup
 	s.Step(`^"([^"]*)" is a invocation counter into "([^"]*)"$`, pw.HandlerIsInvocationCounter)
-	s.Step(`^"([^"]*)" is a function which returns a promise of "([^"]*)"$`, pw.FunctionReturnsPromiseOf)
+	s.Step(`^"([^"]*)" is an async function returning "([^"]*)"$`, pw.IsAnAsyncFunctionReturning)
 	s.Step(`^we wait for a period of "([^"]*)" ms$`, pw.waitForPeriod)
 
-	// Async task — start
-	s.Step(`^I start task "([^"]*)" by calling "([^"]*)"$`, pw.iStartTaskByCallingFunction)
-	s.Step(`^I start task "([^"]*)" by calling "([^"]*)" with parameter "([^"]*)"$`, pw.iStartTaskByCallingFunctionWithParameter)
-	s.Step(`^I start task "([^"]*)" by calling "([^"]*)" with parameters "([^"]*)" and "([^"]*)"$`, pw.iStartTaskByCallingFunctionWithTwoParameters)
+	// Async job — start
+	s.Step(`^I start "([^"]*)" as "([^"]*)"$`, pw.iStartJob)
+	s.Step(`^I start "([^"]*)" with parameter "([^"]*)" as "([^"]*)"$`, pw.iStartJobWithParameter)
+	s.Step(`^I start "([^"]*)" with parameters "([^"]*)" and "([^"]*)" as "([^"]*)"$`, pw.iStartJobWithTwoParameters)
 
-	// Async task — wait
-	s.Step(`^I wait for task "([^"]*)" to complete$`, pw.iWaitForTaskToComplete)
-	s.Step(`^I wait for task "([^"]*)" to complete within "([^"]*)" ms$`, pw.iWaitForTaskToCompleteWithinMs)
+	// Async job — wait
+	s.Step(`^I wait for job "([^"]*)"$`, pw.iWaitForJob)
+	s.Step(`^I wait for job "([^"]*)" within "([^"]*)" ms$`, pw.iWaitForJobWithTimeout)
 
-	// Async — all-in-one
+	// Async — direct function call
 	s.Step(`^I wait for "([^"]*)"$`, pw.iWaitForFunction)
+	s.Step(`^I wait for "([^"]*)" within "([^"]*)" ms$`, pw.iWaitForFunctionWithTimeout)
 	s.Step(`^I wait for "([^"]*)" with parameter "([^"]*)"$`, pw.iWaitForFunctionWithParameter)
 	s.Step(`^I wait for "([^"]*)" with parameters "([^"]*)" and "([^"]*)"$`, pw.iWaitForFunctionWithTwoParameters)
 }

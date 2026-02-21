@@ -18,8 +18,8 @@ Feature: Test setup steps
 
   Scenario: Create a function that returns a value
     Given "myVar" is "hello"
-    And "fn" is a function which returns a promise of "{myVar}"
-    When the promise "{fn}" should resolve
+    And "fn" is an async function returning "{myVar}"
+    When I wait for "{fn}"
     Then "{result}" is "hello"
 
   Scenario: Wait for a period does not advance counter

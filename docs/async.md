@@ -1,47 +1,56 @@
 # Async Steps
 
-Steps for working with promises, futures, and background tasks.
+Steps for working with asynchronous operations and background jobs.
 
 These steps allow you to start async work, wait for completion, and assert results — all within a single Cucumber scenario.
 
+## Language Mapping
+
+This library uses **language-agnostic terminology** in Gherkin that maps to each language's native async mechanism:
+
+| Gherkin Concept | TypeScript | C# | Java | Go |
+|-----------------|------------|-----|------|-----|
+| "async function" | `Promise` / `async function` | `Task<T>` / `Func<Task<T>>` | `CompletableFuture<T>` / `Supplier` | `func()` with goroutine |
+| "job" | `Promise` stored in `Map` | `Task` stored in dictionary | `CompletableFuture` in `HashMap` | `AsyncTask` with channels |
+| "wait for" | `await` | `await` | `.get()` | channel receive / `WaitForTask` |
+| timeout | `Promise.race` with `setTimeout` | `.WaitAsync(TimeSpan)` | `.get(timeout, TimeUnit)` | `time.After` with `select` |
+
 ---
 
-## `the promise "{fn}" should resolve`
+## `"{fn}" is an async function returning "{value}"`
 
-Call `{fn}` (which must be a function returning a promise/future), await it, and store the result in `result`.
+Creates a function that returns an async result. Use this for setup.
 
 ```gherkin
 Given "myVar" is "async-result"
-And "fn" is a function which returns a promise of "{myVar}"
-When the promise "{fn}" should resolve
+And "fn" is an async function returning "{myVar}"
+When I wait for "{fn}"
 Then "{result}" is "async-result"
-```
-
-If the promise rejects/throws, the error is stored in `result` instead.
-
----
-
-## `the promise "{fn}" should resolve within 10 seconds`
-
-Same as above but with a 10-second timeout.
-
-```gherkin
-Given "myVar" is "timed-result"
-And "fn" is a function which returns a promise of "{myVar}"
-When the promise "{fn}" should resolve within 10 seconds
-Then "{result}" is "timed-result"
 ```
 
 ---
 
 ## `I wait for "{fn}"` — call and await immediately
 
-Shorthand: call `{fn}` and wait for it in a single step. Equivalent to starting a task and immediately waiting for it.
+Call `{fn}` and wait for the result. The result is stored in `result`.
 
 ```gherkin
 Given "handler" is a invocation counter into "count"
 When I wait for "{handler}"
 Then "{count}" is "1"
+```
+
+---
+
+## `I wait for "{fn}" within "X" ms` — with timeout
+
+Same as above but with a configurable timeout in milliseconds.
+
+```gherkin
+Given "myVar" is "timed-result"
+And "fn" is an async function returning "{myVar}"
+When I wait for "{fn}" within "10000" ms
+Then "{result}" is "timed-result"
 ```
 
 ---
@@ -59,43 +68,43 @@ Then "{result}" is not an error
 
 ---
 
-## `I start task "name" by calling "{fn}"` — start a background task
+## `I start "{fn}" as "jobName"` — start a background job
 
-Starts `{fn}` asynchronously in the background and registers it under `name`. The scenario continues without blocking.
+Starts `{fn}` asynchronously in the background and registers it under `jobName`. The scenario continues without blocking.
 
 ```gherkin
-When I start task "myTask" by calling "{handler}"
-And I wait for task "myTask" to complete
+When I start "{handler}" as "myJob"
+And I wait for job "myJob"
 Then "{count}" is "1"
 ```
 
 ---
 
-## `I start task "name" by calling "{fn}" with parameter "{p1}"`
+## `I start "{fn}" with parameter "{p1}" as "jobName"`
 
 ---
 
-## `I start task "name" by calling "{fn}" with parameters "{p1}" and "{p2}"`
+## `I start "{fn}" with parameters "{p1}" and "{p2}" as "jobName"`
 
 ---
 
-## `I wait for task "name" to complete` — wait for a named task (30s timeout)
+## `I wait for job "jobName"` — wait for a named job (30s timeout)
 
-Waits for the previously started task to finish. Stores the result in both `result` and `name`.
+Waits for the previously started job to finish. Stores the result in both `result` and `jobName`.
 
 ```gherkin
-When I start task "myTask" by calling "{handler}"
-And I wait for task "myTask" to complete
+When I start "{handler}" as "myJob"
+And I wait for job "myJob"
 Then "{count}" is "1"
 ```
 
 ---
 
-## `I wait for task "name" to complete within "{ms}" ms` — custom timeout
+## `I wait for job "jobName" within "X" ms` — custom timeout
 
 ```gherkin
-When I start task "timedTask" by calling "{handler}"
-And I wait for task "timedTask" to complete within "5000" ms
+When I start "{handler}" as "timedJob"
+And I wait for job "timedJob" within "5000" ms
 Then "{count}" is "1"
 ```
 
@@ -104,21 +113,27 @@ Then "{count}" is "1"
 ## Full example
 
 ```gherkin
-Scenario: Start a task and wait for it to complete
-  Given "handler" is a invocation counter into "count"
-  When I start task "myTask" by calling "{handler}"
-  And I wait for task "myTask" to complete
-  Then "{count}" is "1"
-
-Scenario: Start a task and wait with custom timeout
-  Given "handler" is a invocation counter into "count"
-  When I start task "timedTask" by calling "{handler}"
-  And I wait for task "timedTask" to complete within "5000" ms
-  Then "{count}" is "1"
-
-Scenario: Resolve a promise
+Scenario: Await an async function
   Given "myVar" is "async-result"
-  And "fn" is a function which returns a promise of "{myVar}"
-  When the promise "{fn}" should resolve
+  And "fn" is an async function returning "{myVar}"
+  When I wait for "{fn}"
   Then "{result}" is "async-result"
+
+Scenario: Await with timeout
+  Given "myVar" is "timed-result"
+  And "fn" is an async function returning "{myVar}"
+  When I wait for "{fn}" within "10000" ms
+  Then "{result}" is "timed-result"
+
+Scenario: Run in background and wait later
+  Given "handler" is a invocation counter into "count"
+  When I start "{handler}" as "myJob"
+  And I wait for job "myJob"
+  Then "{count}" is "1"
+
+Scenario: Background job with timeout
+  Given "handler" is a invocation counter into "count"
+  When I start "{handler}" as "timedJob"
+  And I wait for job "timedJob" within "5000" ms
+  Then "{count}" is "1"
 ```

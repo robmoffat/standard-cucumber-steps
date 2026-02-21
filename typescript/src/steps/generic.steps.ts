@@ -10,34 +10,6 @@ import {
 import { PropsWorld } from '../world';
 
 export function setupGenericSteps() {
-  // ========== Promise Resolution Steps ==========
-
-  Then('the promise {string} should resolve', async function (this: PropsWorld, field: string) {
-    try {
-      const fn = handleResolve(field, this);
-      const promise = typeof fn === 'function' ? fn() : fn;
-      const object = await promise;
-      this.props['result'] = object;
-    } catch (error) {
-      this.props['result'] = error;
-    }
-  });
-
-  Then(
-    'the promise {string} should resolve within 10 seconds',
-    { timeout: 10 * 1000 },
-    async function (this: PropsWorld, field: string) {
-      try {
-        const fn = handleResolve(field, this);
-        const promise = typeof fn === 'function' ? fn() : fn;
-        const object = await promise;
-        this.props['result'] = object;
-      } catch (error) {
-        this.props['result'] = error;
-      }
-    }
-  );
-
   // ========== Method Invocation (Object.method) Steps ==========
 
   When('I call {string} with {string}', async function (this: PropsWorld, field: string, fnName: string) {
@@ -306,7 +278,7 @@ export function setupGenericSteps() {
   );
 
   Given(
-    '{string} is a function which returns a promise of {string}',
+    '{string} is an async function returning {string}',
     function (this: PropsWorld, fnName: string, field: string) {
       const value = handleResolve(field, this);
       this.props[fnName] = async () => {
@@ -321,71 +293,71 @@ export function setupGenericSteps() {
     });
   });
 
-  // ========== Async Task Steps ==========
+  // ========== Async Job Steps ==========
 
   When(
-    'I start task {string} by calling {string}',
-    async function (this: PropsWorld, taskName: string, fnName: string) {
-      const tasks: Map<string, Promise<any>> = this.props['_tasks'] ?? new Map();
-      this.props['_tasks'] = tasks;
+    'I start {string} as {string}',
+    async function (this: PropsWorld, fnName: string, jobName: string) {
+      const jobs: Map<string, Promise<any>> = this.props['_jobs'] ?? new Map();
+      this.props['_jobs'] = jobs;
       const fn = handleResolve(fnName, this);
-      tasks.set(taskName, Promise.resolve().then(() => fn()));
+      jobs.set(jobName, Promise.resolve().then(() => fn()));
     }
   );
 
   When(
-    'I start task {string} by calling {string} with parameter {string}',
-    async function (this: PropsWorld, taskName: string, fnName: string, param: string) {
-      const tasks: Map<string, Promise<any>> = this.props['_tasks'] ?? new Map();
-      this.props['_tasks'] = tasks;
+    'I start {string} with parameter {string} as {string}',
+    async function (this: PropsWorld, fnName: string, param: string, jobName: string) {
+      const jobs: Map<string, Promise<any>> = this.props['_jobs'] ?? new Map();
+      this.props['_jobs'] = jobs;
       const fn = handleResolve(fnName, this);
       const p = handleResolve(param, this);
-      tasks.set(taskName, Promise.resolve().then(() => fn(p)));
+      jobs.set(jobName, Promise.resolve().then(() => fn(p)));
     }
   );
 
   When(
-    'I start task {string} by calling {string} with parameters {string} and {string}',
-    async function (this: PropsWorld, taskName: string, fnName: string, param1: string, param2: string) {
-      const tasks: Map<string, Promise<any>> = this.props['_tasks'] ?? new Map();
-      this.props['_tasks'] = tasks;
+    'I start {string} with parameters {string} and {string} as {string}',
+    async function (this: PropsWorld, fnName: string, param1: string, param2: string, jobName: string) {
+      const jobs: Map<string, Promise<any>> = this.props['_jobs'] ?? new Map();
+      this.props['_jobs'] = jobs;
       const fn = handleResolve(fnName, this);
       const p1 = handleResolve(param1, this);
       const p2 = handleResolve(param2, this);
-      tasks.set(taskName, Promise.resolve().then(() => fn(p1, p2)));
+      jobs.set(jobName, Promise.resolve().then(() => fn(p1, p2)));
     }
   );
 
   Then(
-    'I wait for task {string} to complete',
-    async function (this: PropsWorld, taskName: string) {
-      const tasks: Map<string, Promise<any>> = this.props['_tasks'] ?? new Map();
+    'I wait for job {string}',
+    async function (this: PropsWorld, jobName: string) {
+      const jobs: Map<string, Promise<any>> = this.props['_jobs'] ?? new Map();
       try {
-        const result = await tasks.get(taskName);
+        const result = await jobs.get(jobName);
         this.props['result'] = result;
-        this.props[taskName] = result;
+        this.props[jobName] = result;
       } catch (error) {
         this.props['result'] = error;
-        this.props[taskName] = error;
+        this.props[jobName] = error;
       }
     }
   );
 
   Then(
-    'I wait for task {string} to complete within {string} ms',
-    async function (this: PropsWorld, taskName: string, timeoutMs: string) {
-      const tasks: Map<string, Promise<any>> = this.props['_tasks'] ?? new Map();
+    'I wait for job {string} within {string} ms',
+    async function (this: PropsWorld, jobName: string, timeoutMs: string) {
+      const jobs: Map<string, Promise<any>> = this.props['_jobs'] ?? new Map();
       const ms = parseInt(timeoutMs);
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error(`Task ${taskName} timed out after ${ms}ms`)), ms)
+        setTimeout(() => reject(new Error(`Job ${jobName} timed out after ${ms}ms`)), ms)
       );
       try {
-        const result = await Promise.race([tasks.get(taskName), timeoutPromise]);
+        const result = await Promise.race([jobs.get(jobName), timeoutPromise]);
         this.props['result'] = result;
-        this.props[taskName] = result;
+        this.props[jobName] = result;
       } catch (error) {
         this.props['result'] = error;
-        this.props[taskName] = error;
+        this.props[jobName] = error;
       }
     }
   );
@@ -399,6 +371,23 @@ export function setupGenericSteps() {
       this.props['result'] = error;
     }
   });
+
+  When(
+    'I wait for {string} within {string} ms',
+    async function (this: PropsWorld, fnName: string, timeoutMs: string) {
+      const fn = handleResolve(fnName, this);
+      const ms = parseInt(timeoutMs);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms)
+      );
+      try {
+        const result = await Promise.race([fn(), timeoutPromise]);
+        this.props['result'] = result;
+      } catch (error) {
+        this.props['result'] = error;
+      }
+    }
+  );
 
   When(
     'I wait for {string} with parameter {string}',
