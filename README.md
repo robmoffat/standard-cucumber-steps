@@ -216,6 +216,7 @@ Full documentation with examples for each step group:
 |------|-------------|
 | `Given "handler" is a invocation counter into "count"` | Create a counting callable |
 | `Given "fn" is an async function returning "{value}"` | Create an async function |
+| `Given "fn" is an async function returning "{value}" after "{ms}" ms` | Create an async function with delay |
 | `Given we wait for a period of "{ms}" ms` | Sleep/delay |
 
 ---

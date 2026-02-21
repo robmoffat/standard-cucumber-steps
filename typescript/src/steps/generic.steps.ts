@@ -333,6 +333,18 @@ export function setupGenericSteps() {
     }
   );
 
+  Given(
+    '{string} is an async function returning {string} after {string} ms',
+    function (this: PropsWorld, fnName: string, field: string, delayMs: string) {
+      const value = handleResolve(field, this);
+      const delay = parseInt(delayMs);
+      this.props[fnName] = async () => {
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return value;
+      };
+    }
+  );
+
   Given('we wait for a period of {string} ms', function (this: PropsWorld, ms: string) {
     return new Promise<void>((resolve, _reject) => {
       setTimeout(() => resolve(), parseInt(ms));

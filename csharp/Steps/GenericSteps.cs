@@ -345,11 +345,23 @@ public class GenericSteps
         }));
     }
 
-    [Given("{string} is a function which returns a promise of {string}")]
-    public void IsAFunctionReturningPromise(string fnName, string valueField)
+    [Given("{string} is an async function returning {string}")]
+    public void IsAnAsyncFunctionReturning(string fnName, string valueField)
     {
         var value = MatchingUtils.HandleResolve(valueField, _world);
         _world.Set(fnName, (Func<Task<object?>>)(() => Task.FromResult(value)));
+    }
+
+    [Given("{string} is an async function returning {string} after {string} ms")]
+    public void IsAnAsyncFunctionReturningAfterDelay(string fnName, string valueField, string delayMs)
+    {
+        var value = MatchingUtils.HandleResolve(valueField, _world);
+        var delay = int.Parse(delayMs);
+        _world.Set(fnName, (Func<Task<object?>>)(async () =>
+        {
+            await Task.Delay(delay);
+            return value;
+        }));
     }
 
     [Given("{string} is {string}")]

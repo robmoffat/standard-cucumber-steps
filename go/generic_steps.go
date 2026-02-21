@@ -789,6 +789,19 @@ func (pw *PropsWorld) IsAnAsyncFunctionReturning(fnName, field string) error {
 	return nil
 }
 
+func (pw *PropsWorld) IsAnAsyncFunctionReturningAfterDelay(fnName, field, delayMs string) error {
+	value := pw.HandleResolve(field)
+	delay, err := strconv.Atoi(delayMs)
+	if err != nil {
+		return fmt.Errorf("invalid delay: %s", delayMs)
+	}
+	pw.Props[fnName] = func() interface{} {
+		time.Sleep(time.Duration(delay) * time.Millisecond)
+		return value
+	}
+	return nil
+}
+
 func (pw *PropsWorld) fieldIs(field, value string) error {
 	resolved := pw.HandleResolve(value)
 	// If field has {braces}, it's a prop lookup — assertion mode
@@ -1081,6 +1094,7 @@ func (pw *PropsWorld) RegisterSteps(s *godog.ScenarioContext) {
 	// Test setup
 	s.Step(`^"([^"]*)" is a invocation counter into "([^"]*)"$`, pw.HandlerIsInvocationCounter)
 	s.Step(`^"([^"]*)" is an async function returning "([^"]*)"$`, pw.IsAnAsyncFunctionReturning)
+	s.Step(`^"([^"]*)" is an async function returning "([^"]*)" after "([^"]*)" ms$`, pw.IsAnAsyncFunctionReturningAfterDelay)
 	s.Step(`^we wait for a period of "([^"]*)" ms$`, pw.waitForPeriod)
 
 	// Async job — start
