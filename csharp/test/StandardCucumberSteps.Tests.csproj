@@ -20,26 +20,12 @@
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
     <PackageReference Include="coverlet.msbuild" Version="6.0.2" />
   </ItemGroup>
-  <!--
-    Copy the language-agnostic shared feature files into features/shared/ before the build.
-    This keeps the top-level features/ directory free of C#-specific build artefacts (.feature.cs)
-    while still allowing Reqnroll to generate test code from the shared scenarios.
-    The copied files are ephemeral build artefacts — they are gitignored.
-  -->
-  <Target Name="CopySharedFeatures" BeforeTargets="PrepareForBuild;ReqnrollGenerate">
-    <ItemGroup>
-      <_SharedFeatureFiles Include="$(MSBuildProjectDirectory)/../../features/**/*.feature" />
-    </ItemGroup>
-    <MakeDir Directories="$(MSBuildProjectDirectory)/features/shared" />
-    <Copy
-      SourceFiles="@(_SharedFeatureFiles)"
-      DestinationFolder="$(MSBuildProjectDirectory)/features/shared/%(RecursiveDir)"
-      SkipUnchangedFiles="true" />
-  </Target>
 
-  <!-- Clean up the copied shared features when running dotnet clean -->
-  <Target Name="CleanSharedFeatures" AfterTargets="Clean">
-    <RemoveDir Directories="$(MSBuildProjectDirectory)/features/shared" />
-  </Target>
+  <!--
+    Shared feature files are copied into features/shared/ by 'make copy-features' (Makefile)
+    or the 'Copy shared feature files' step in CI before dotnet test is invoked.
+    Reqnroll auto-detects all *.feature files under the project directory at evaluation time,
+    so they must exist on disk before dotnet build/test is called.
+  -->
 
 </Project>

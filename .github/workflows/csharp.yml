@@ -14,6 +14,8 @@ jobs:
         run: |
           dotnet tool install -g dotnet-coverage
           dotnet tool install -g dotnet-reportgenerator-globaltool
+      - name: Copy shared feature files
+        run: mkdir -p csharp/test/features/shared && cp features/*.feature csharp/test/features/shared/
       - name: Run tests with coverage
         run: dotnet test test/ --collect "Code Coverage" --settings test/coverage.runsettings --results-directory TestResults
         working-directory: csharp
