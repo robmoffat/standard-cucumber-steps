@@ -20,13 +20,6 @@
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
     <PackageReference Include="coverlet.msbuild" Version="6.0.2" />
   </ItemGroup>
-
-  <!--
-    All .feature files (both csharp-specific.feature and features/shared/**) are
-    auto-detected by Reqnroll from the project directory — no explicit ReqnrollFeatureFiles
-    entries needed. The CopySharedFeatures target below makes the shared ones available.
-  -->
-
   <!--
     Copy the language-agnostic shared feature files into features/shared/ before the build.
     This keeps the top-level features/ directory free of C#-specific build artefacts (.feature.cs)
