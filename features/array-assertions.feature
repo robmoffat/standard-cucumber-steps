@@ -1,8 +1,5 @@
-Feature: Array and numeric assertion steps
-
-  # Array-specific steps (is an array of objects/strings) require language-specific
-  # @Before hooks to create test arrays in props. These scenarios test the numeric
-  # and range assertions that support array-length verification.
+Feature: Array and object assertion steps
+  # Tests for array matching, object matching, and numeric assertions
 
   Scenario: Counter reflects number of calls
     Given "handler" is a invocation counter into "count"
@@ -33,3 +30,52 @@ Feature: Array and numeric assertion steps
       | COMPLETED |
       | PENDING   |
       | FAILED    |
+
+  Scenario: Array of objects with exact contents
+    Given "arrayMaker" is an async function returning "{sampleArray}"
+    When I wait for "{arrayMaker}"
+    Then "{result}" is an array of objects with the following contents
+      | name  | value |
+      | Alice |   100 |
+      | Bob   |   200 |
+
+  Scenario: Array of objects with at least contents
+    Given "arrayMaker" is an async function returning "{sampleArray}"
+    When I wait for "{arrayMaker}"
+    Then "{result}" is an array of objects with at least the following contents
+      | name  |
+      | Alice |
+
+  Scenario: Array of objects which doesn't contain
+    Given "arrayMaker" is an async function returning "{sampleArray}"
+    When I wait for "{arrayMaker}"
+    Then "{result}" is an array of objects which doesn't contain any of
+      | name    |
+      | Charlie |
+      | David   |
+
+  Scenario: Array length assertion
+    Given "arrayMaker" is an async function returning "{sampleArray}"
+    When I wait for "{arrayMaker}"
+    Then "{result}" is an array of objects with length "2"
+
+  Scenario: Array of strings assertion
+    Given "arrayMaker" is an async function returning "{sampleStringArray}"
+    When I wait for "{arrayMaker}"
+    Then "{result}" is an array of strings with the following values
+      | value |
+      | one   |
+      | two   |
+      | three |
+
+  Scenario: Object with contents assertion
+    Given "objectMaker" is an async function returning "{sampleObject}"
+    When I wait for "{objectMaker}"
+    Then "{result}" is an object with the following contents
+      | name | age |
+      | John |  30 |
+
+  Scenario: Empty array assertion
+    Given "emptyMaker" is an async function returning "{sampleEmptyArray}"
+    When I wait for "{emptyMaker}"
+    Then "{result}" is empty

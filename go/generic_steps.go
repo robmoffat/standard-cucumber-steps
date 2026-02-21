@@ -119,23 +119,6 @@ func NewPropsWorld() *PropsWorld {
 	}
 }
 
-// formatValueForComparison formats a value for display
-func formatValueForComparison(value interface{}) string {
-	if value == nil {
-		return "null"
-	}
-	v := reflect.ValueOf(value)
-	switch v.Kind() {
-	case reflect.Map, reflect.Slice, reflect.Array, reflect.Struct:
-		if jsonBytes, err := json.MarshalIndent(value, "", "  "); err == nil {
-			return string(jsonBytes)
-		}
-		return fmt.Sprintf("%+v", value)
-	default:
-		return fmt.Sprintf("%v (type: %T)", value, value)
-	}
-}
-
 // HandleResolve resolves variables and literals from string references.
 func (pw *PropsWorld) HandleResolve(name string) interface{} {
 	if strings.HasPrefix(name, "{") && strings.HasSuffix(name, "}") && strings.Count(name, "{") == 1 {
@@ -332,22 +315,6 @@ func (pw *PropsWorld) handleMethodResultsSync(results []reflect.Value) {
 	if len(results) > 0 {
 		pw.Props["result"] = results[0].Interface()
 	}
-}
-
-func handleMethodResultsAsync(results []reflect.Value) (interface{}, error) {
-	if len(results) == 0 {
-		return nil, nil
-	}
-	if len(results) > 1 {
-		if err, ok := results[len(results)-1].Interface().(error); ok && err != nil {
-			return nil, err
-		}
-	}
-	result := results[0].Interface()
-	if err, ok := result.(error); ok {
-		return nil, err
-	}
-	return result, nil
 }
 
 func parseNumber(val interface{}) (float64, error) {
@@ -789,19 +756,6 @@ func (pw *PropsWorld) IsAnAsyncFunctionReturning(fnName, field string) error {
 	return nil
 }
 
-func (pw *PropsWorld) IsAnAsyncFunctionReturningAfterDelay(fnName, field, delayMs string) error {
-	value := pw.HandleResolve(field)
-	delay, err := strconv.Atoi(delayMs)
-	if err != nil {
-		return fmt.Errorf("invalid delay: %s", delayMs)
-	}
-	pw.Props[fnName] = func() interface{} {
-		time.Sleep(time.Duration(delay) * time.Millisecond)
-		return value
-	}
-	return nil
-}
-
 func (pw *PropsWorld) fieldIs(field, value string) error {
 	resolved := pw.HandleResolve(value)
 	// If field has {braces}, it's a prop lookup — assertion mode
@@ -1094,7 +1048,6 @@ func (pw *PropsWorld) RegisterSteps(s *godog.ScenarioContext) {
 	// Test setup
 	s.Step(`^"([^"]*)" is a invocation counter into "([^"]*)"$`, pw.HandlerIsInvocationCounter)
 	s.Step(`^"([^"]*)" is an async function returning "([^"]*)"$`, pw.IsAnAsyncFunctionReturning)
-	s.Step(`^"([^"]*)" is an async function returning "([^"]*)" after "([^"]*)" ms$`, pw.IsAnAsyncFunctionReturningAfterDelay)
 	s.Step(`^we wait for a period of "([^"]*)" ms$`, pw.waitForPeriod)
 
 	// Async job — start

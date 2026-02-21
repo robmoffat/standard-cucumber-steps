@@ -1,0 +1,1174 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>go: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/robmoffat/standard-cucumber-steps/go/generic_steps.go (82.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package generic
+
+import (
+        "context"
+        "encoding/json"
+        "fmt"
+        "reflect"
+        "strconv"
+        "strings"
+        "sync"
+        "time"
+
+        "github.com/PaesslerAG/jsonpath"
+        "github.com/cucumber/godog"
+)
+
+// AsyncTask represents an asynchronous operation
+type AsyncTask struct {
+        Name      string
+        StartTime time.Time
+        Done      chan struct{}
+        Result    interface{}
+        Error     error
+        Context   context.Context
+        Cancel    context.CancelFunc
+}
+
+// AsyncTaskManager manages multiple async operations
+type AsyncTaskManager struct {
+        tasks map[string]*AsyncTask
+        mutex sync.RWMutex
+}
+
+// NewAsyncTaskManager creates a new async task manager
+func NewAsyncTaskManager() *AsyncTaskManager <span class="cov8" title="1">{
+        return &amp;AsyncTaskManager{
+                tasks: make(map[string]*AsyncTask),
+        }
+}</span>
+
+// StartTask starts a new async task
+func (atm *AsyncTaskManager) StartTask(name string, fn func(ctx context.Context) (interface{}, error)) <span class="cov8" title="1">{
+        atm.mutex.Lock()
+        defer atm.mutex.Unlock()
+
+        ctx, cancel := context.WithCancel(context.Background())
+        task := &amp;AsyncTask{
+                Name:      name,
+                StartTime: time.Now(),
+                Done:      make(chan struct{}),
+                Context:   ctx,
+                Cancel:    cancel,
+        }
+
+        atm.tasks[name] = task
+
+        go func() </span><span class="cov8" title="1">{
+                defer close(task.Done)
+                task.Result, task.Error = fn(ctx)
+        }</span>()
+}
+
+// WaitForTask waits for a task to complete with timeout
+func (atm *AsyncTaskManager) WaitForTask(name string, timeout time.Duration) error <span class="cov8" title="1">{
+        atm.mutex.RLock()
+        task, exists := atm.tasks[name]
+        atm.mutex.RUnlock()
+
+        if !exists </span><span class="cov0" title="0">{
+                return fmt.Errorf("task %s not found", name)
+        }</span>
+
+        <span class="cov8" title="1">select </span>{
+        case &lt;-task.Done:<span class="cov8" title="1">
+                return task.Error</span>
+        case &lt;-time.After(timeout):<span class="cov0" title="0">
+                task.Cancel()
+                return fmt.Errorf("task %s timed out after %v", name, timeout)</span>
+        }
+}
+
+// GetTaskResult gets the result of a completed task
+func (atm *AsyncTaskManager) GetTaskResult(name string) (interface{}, error) <span class="cov8" title="1">{
+        atm.mutex.RLock()
+        defer atm.mutex.RUnlock()
+
+        task, exists := atm.tasks[name]
+        if !exists </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("task %s not found", name)
+        }</span>
+
+        <span class="cov8" title="1">select </span>{
+        case &lt;-task.Done:<span class="cov8" title="1">
+                return task.Result, task.Error</span>
+        default:<span class="cov0" title="0">
+                return nil, fmt.Errorf("task %s is still running", name)</span>
+        }
+}
+
+// TestingT interface for testing assertions
+type TestingT interface {
+        Errorf(format string, args ...interface{})
+        FailNow()
+}
+
+// PropsWorld represents the test context
+type PropsWorld struct {
+        Props        map[string]interface{}
+        T            TestingT
+        AsyncManager *AsyncTaskManager
+        mutex        sync.RWMutex
+}
+
+// NewPropsWorld creates a new test world instance
+func NewPropsWorld() *PropsWorld <span class="cov8" title="1">{
+        return &amp;PropsWorld{
+                Props:        make(map[string]interface{}),
+                AsyncManager: NewAsyncTaskManager(),
+        }
+}</span>
+
+// HandleResolve resolves variables and literals from string references.
+func (pw *PropsWorld) HandleResolve(name string) interface{} <span class="cov8" title="1">{
+        if strings.HasPrefix(name, "{") &amp;&amp; strings.HasSuffix(name, "}") &amp;&amp; strings.Count(name, "{") == 1 </span><span class="cov8" title="1">{
+                return pw.resolveSingleVar(name)
+        }</span>
+        <span class="cov8" title="1">if strings.Contains(name, "{") &amp;&amp; strings.Contains(name, "}") </span><span class="cov8" title="1">{
+                result := name
+                for </span><span class="cov8" title="1">{
+                        start := strings.Index(result, "{")
+                        if start == -1 </span><span class="cov8" title="1">{
+                                break</span>
+                        }
+                        <span class="cov8" title="1">end := strings.Index(result[start:], "}")
+                        if end == -1 </span><span class="cov0" title="0">{
+                                break</span>
+                        }
+                        <span class="cov8" title="1">end += start
+                        varRef := result[start : end+1]
+                        resolved := pw.resolveSingleVar(varRef)
+                        if resolved != nil </span><span class="cov8" title="1">{
+                                result = result[:start] + fmt.Sprintf("%v", resolved) + result[end+1:]
+                        }</span> else<span class="cov0" title="0"> {
+                                break</span>
+                        }
+                }
+                <span class="cov8" title="1">return result</span>
+        }
+        <span class="cov8" title="1">return name</span>
+}
+
+// resolveSingleVar resolves a single {varName} reference
+func (pw *PropsWorld) resolveSingleVar(name string) interface{} <span class="cov8" title="1">{
+        if !strings.HasPrefix(name, "{") || !strings.HasSuffix(name, "}") </span><span class="cov0" title="0">{
+                return name
+        }</span>
+
+        <span class="cov8" title="1">stripped := name[1 : len(name)-1]
+
+        switch stripped </span>{
+        case "null":<span class="cov8" title="1">
+                return nil</span>
+        case "nil":<span class="cov8" title="1">
+                return nil</span>
+        case "true":<span class="cov8" title="1">
+                return true</span>
+        case "false":<span class="cov8" title="1">
+                return false</span>
+        default:<span class="cov8" title="1">
+                if val, err := strconv.ParseFloat(stripped, 64); err == nil </span><span class="cov8" title="1">{
+                        return val
+                }</span>
+                <span class="cov8" title="1">if val, exists := pw.Props[stripped]; exists </span><span class="cov8" title="1">{
+                        return val
+                }</span>
+                <span class="cov8" title="1">pascalCase := strings.ToUpper(stripped[:1]) + stripped[1:]
+                if val, exists := pw.Props[pascalCase]; exists </span><span class="cov0" title="0">{
+                        return val
+                }</span>
+                <span class="cov8" title="1">if strings.Contains(stripped, ".") </span><span class="cov8" title="1">{
+                        parts := strings.Split(stripped, ".")
+                        if len(parts) == 2 </span><span class="cov8" title="1">{
+                                objName := parts[0]
+                                fieldName := parts[1]
+                                if obj, exists := pw.Props[objName]; exists </span><span class="cov8" title="1">{
+                                        v := reflect.ValueOf(obj)
+                                        if v.Kind() == reflect.Ptr </span><span class="cov8" title="1">{
+                                                v = v.Elem()
+                                        }</span>
+                                        <span class="cov8" title="1">if v.Kind() == reflect.Struct </span><span class="cov8" title="1">{
+                                                field := v.FieldByName(fieldName)
+                                                if field.IsValid() </span><span class="cov8" title="1">{
+                                                        return field.Interface()
+                                                }</span>
+                                                <span class="cov8" title="1">capitalizedFieldName := strings.ToUpper(fieldName[:1]) + fieldName[1:]
+                                                field = v.FieldByName(capitalizedFieldName)
+                                                if field.IsValid() </span><span class="cov8" title="1">{
+                                                        return field.Interface()
+                                                }</span>
+                                                <span class="cov0" title="0">getterName := "Get" + capitalizedFieldName
+                                                method := reflect.ValueOf(obj).MethodByName(getterName)
+                                                if method.IsValid() </span><span class="cov0" title="0">{
+                                                        results := method.Call(nil)
+                                                        if len(results) &gt; 0 </span><span class="cov0" title="0">{
+                                                                return results[0].Interface()
+                                                        }</span>
+                                                }
+                                        }
+                                }
+                        }
+                }
+                <span class="cov8" title="1">if result, err := jsonpath.Get("$."+stripped, pw.Props); err == nil </span><span class="cov0" title="0">{
+                        return result
+                }</span>
+                <span class="cov8" title="1">return nil</span>
+        }
+}
+
+// callFunction safely calls a function with error handling
+func (pw *PropsWorld) callFunction(fn interface{}, args ...interface{}) <span class="cov8" title="1">{
+        defer func() </span><span class="cov8" title="1">{
+                if r := recover(); r != nil </span><span class="cov0" title="0">{
+                        pw.Props["result"] = fmt.Errorf("panic: %v", r)
+                }</span>
+        }()
+
+        <span class="cov8" title="1">fnValue := reflect.ValueOf(fn)
+        if fnValue.Kind() != reflect.Func </span><span class="cov8" title="1">{
+                pw.Props["result"] = fmt.Errorf("not a function")
+                return
+        }</span>
+
+        <span class="cov8" title="1">argValues := make([]reflect.Value, len(args))
+        for i, arg := range args </span><span class="cov8" title="1">{
+                argValues[i] = reflect.ValueOf(arg)
+        }</span>
+
+        <span class="cov8" title="1">results := fnValue.Call(argValues)
+
+        if len(results) &gt; 0 </span><span class="cov8" title="1">{
+                pw.Props["result"] = results[0].Interface()
+        }</span>
+}
+
+// doesRowMatch checks if a data row matches the expected values
+func (pw *PropsWorld) doesRowMatch(expected map[string]string, actual interface{}) (bool, string) <span class="cov8" title="1">{
+        actualBytes, _ := json.Marshal(actual)
+        var actualMap map[string]interface{}
+        json.Unmarshal(actualBytes, &amp;actualMap)
+
+        var debugInfo []string
+        debugInfo = append(debugInfo, fmt.Sprintf("Actual object: %s", string(actualBytes)))
+
+        for field, expectedVal := range expected </span><span class="cov8" title="1">{
+                if strings.HasSuffix(field, "matches_type") </span><span class="cov0" title="0">{
+                        debugInfo = append(debugInfo, fmt.Sprintf("  %s: SKIPPED (schema validation)", field))
+                        continue</span>
+                }
+
+                <span class="cov8" title="1">var foundVal interface{}
+                if result, err := jsonpath.Get("$."+field, actualMap); err == nil </span><span class="cov8" title="1">{
+                        foundVal = result
+                }</span>
+
+                <span class="cov8" title="1">resolvedExpected := pw.HandleResolve(expectedVal)
+
+                if foundVal == true &amp;&amp; resolvedExpected == "true" </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">if foundVal == false &amp;&amp; resolvedExpected == "false" </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov8" title="1">foundStr := fmt.Sprintf("%v", foundVal)
+                expectedStr := fmt.Sprintf("%v", resolvedExpected)
+
+                if foundStr != expectedStr </span><span class="cov8" title="1">{
+                        debugInfo = append(debugInfo, fmt.Sprintf("  %s: MISMATCH - found: '%s', expected: '%s'",
+                                field, foundStr, expectedStr))
+                        return false, strings.Join(debugInfo, "\n")
+                }</span>
+        }
+
+        <span class="cov8" title="1">return true, strings.Join(debugInfo, "\n")</span>
+}
+
+// matchData validates array data against expected table
+func (pw *PropsWorld) matchData(actual []interface{}, expected []map[string]string) error <span class="cov8" title="1">{
+        if len(actual) != len(expected) </span><span class="cov0" title="0">{
+                return fmt.Errorf("length mismatch: expected %d, got %d", len(expected), len(actual))
+        }</span>
+        <span class="cov8" title="1">for i, expectedRow := range expected </span><span class="cov8" title="1">{
+                matches, debugInfo := pw.doesRowMatch(expectedRow, actual[i])
+                if !matches </span><span class="cov0" title="0">{
+                        return fmt.Errorf("row %d does not match:\n%s", i, debugInfo)
+                }</span>
+        }
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) recoverFromMethodCallPanic(objectName, methodName string, params ...interface{}) <span class="cov8" title="1">{
+        if r := recover(); r != nil </span><span class="cov0" title="0">{
+                errMsg := fmt.Sprintf("Error calling %s.%s: %v", objectName, methodName, r)
+                pw.Props["result"] = fmt.Errorf("%s", errMsg)
+        }</span>
+}
+
+func (pw *PropsWorld) handleMethodResultsSync(results []reflect.Value) <span class="cov8" title="1">{
+        if len(results) &gt; 1 </span><span class="cov8" title="1">{
+                if err, ok := results[len(results)-1].Interface().(error); ok &amp;&amp; err != nil </span><span class="cov8" title="1">{
+                        pw.Props["result"] = err
+                        return
+                }</span>
+        }
+        <span class="cov8" title="1">if len(results) &gt; 0 </span><span class="cov8" title="1">{
+                pw.Props["result"] = results[0].Interface()
+        }</span>
+}
+
+func parseNumber(val interface{}) (float64, error) <span class="cov8" title="1">{
+        switch v := val.(type) </span>{
+        case int:<span class="cov8" title="1">
+                return float64(v), nil</span>
+        case int32:<span class="cov0" title="0">
+                return float64(v), nil</span>
+        case int64:<span class="cov0" title="0">
+                return float64(v), nil</span>
+        case float32:<span class="cov0" title="0">
+                return float64(v), nil</span>
+        case float64:<span class="cov8" title="1">
+                return v, nil</span>
+        case string:<span class="cov8" title="1">
+                return strconv.ParseFloat(v, 64)</span>
+        default:<span class="cov0" title="0">
+                return strconv.ParseFloat(fmt.Sprintf("%v", v), 64)</span>
+        }
+}
+
+// Step implementations
+
+func (pw *PropsWorld) iCallFunction(fnName string) error <span class="cov8" title="1">{
+        fn := pw.HandleResolve(fnName)
+        pw.callFunction(fn)
+        return nil
+}</span>
+
+func (pw *PropsWorld) iCallObjectWithMethod(field, fnName string) error <span class="cov8" title="1">{
+        obj := pw.HandleResolve(field)
+        objValue := reflect.ValueOf(obj)
+        method := objValue.MethodByName(fnName)
+        if !method.IsValid() </span><span class="cov0" title="0">{
+                pw.Props["result"] = fmt.Errorf("method %s not found", fnName)
+                return nil
+        }</span>
+        <span class="cov8" title="1">defer pw.recoverFromMethodCallPanic(field, fnName)
+        results := method.Call([]reflect.Value{})
+        pw.handleMethodResultsSync(results)
+        return nil</span>
+}
+
+func (pw *PropsWorld) iCallObjectWithMethodWithParameter(field, fnName, param string) error <span class="cov8" title="1">{
+        obj := pw.HandleResolve(field)
+        paramVal := pw.HandleResolve(param)
+        objValue := reflect.ValueOf(obj)
+        method := objValue.MethodByName(fnName)
+        if !method.IsValid() </span><span class="cov0" title="0">{
+                pw.Props["result"] = fmt.Errorf("method %s not found", fnName)
+                return nil
+        }</span>
+        <span class="cov8" title="1">defer pw.recoverFromMethodCallPanic(field, fnName, param)
+        results := method.Call([]reflect.Value{reflect.ValueOf(paramVal)})
+        pw.handleMethodResultsSync(results)
+        return nil</span>
+}
+
+func (pw *PropsWorld) iCallObjectWithMethodWithTwoParameters(field, fnName, param1, param2 string) error <span class="cov8" title="1">{
+        obj := pw.HandleResolve(field)
+        objValue := reflect.ValueOf(obj)
+        method := objValue.MethodByName(fnName)
+        if !method.IsValid() </span><span class="cov0" title="0">{
+                pw.Props["result"] = fmt.Errorf("method %s not found", fnName)
+                return nil
+        }</span>
+        <span class="cov8" title="1">defer pw.recoverFromMethodCallPanic(field, fnName, param1, param2)
+        results := method.Call([]reflect.Value{
+                reflect.ValueOf(pw.HandleResolve(param1)),
+                reflect.ValueOf(pw.HandleResolve(param2)),
+        })
+        pw.handleMethodResultsSync(results)
+        return nil</span>
+}
+
+func (pw *PropsWorld) iCallObjectWithMethodWithThreeParameters(field, fnName, param1, param2, param3 string) error <span class="cov8" title="1">{
+        obj := pw.HandleResolve(field)
+        objValue := reflect.ValueOf(obj)
+        method := objValue.MethodByName(fnName)
+        if !method.IsValid() </span><span class="cov0" title="0">{
+                pw.Props["result"] = fmt.Errorf("method %s not found", fnName)
+                return nil
+        }</span>
+        <span class="cov8" title="1">defer pw.recoverFromMethodCallPanic(field, fnName, param1, param2, param3)
+        results := method.Call([]reflect.Value{
+                reflect.ValueOf(pw.HandleResolve(param1)),
+                reflect.ValueOf(pw.HandleResolve(param2)),
+                reflect.ValueOf(pw.HandleResolve(param3)),
+        })
+        pw.handleMethodResultsSync(results)
+        return nil</span>
+}
+
+func (pw *PropsWorld) iCallObjectWithMethodWithFourParameters(field, fnName, param1, param2, param3, param4 string) error <span class="cov8" title="1">{
+        obj := pw.HandleResolve(field)
+        objValue := reflect.ValueOf(obj)
+        method := objValue.MethodByName(fnName)
+        if !method.IsValid() </span><span class="cov0" title="0">{
+                pw.Props["result"] = fmt.Errorf("method %s not found", fnName)
+                return nil
+        }</span>
+        <span class="cov8" title="1">defer pw.recoverFromMethodCallPanic(field, fnName, param1, param2, param3, param4)
+        results := method.Call([]reflect.Value{
+                reflect.ValueOf(pw.HandleResolve(param1)),
+                reflect.ValueOf(pw.HandleResolve(param2)),
+                reflect.ValueOf(pw.HandleResolve(param3)),
+                reflect.ValueOf(pw.HandleResolve(param4)),
+        })
+        pw.handleMethodResultsSync(results)
+        return nil</span>
+}
+
+func (pw *PropsWorld) iCallFunctionWithParameter(fnName, param string) error <span class="cov8" title="1">{
+        pw.callFunction(pw.HandleResolve(fnName), pw.HandleResolve(param))
+        return nil
+}</span>
+
+func (pw *PropsWorld) iCallFunctionWithTwoParameters(fnName, param1, param2 string) error <span class="cov8" title="1">{
+        pw.callFunction(pw.HandleResolve(fnName), pw.HandleResolve(param1), pw.HandleResolve(param2))
+        return nil
+}</span>
+
+func (pw *PropsWorld) iCallFunctionWithThreeParameters(fnName, param1, param2, param3 string) error <span class="cov8" title="1">{
+        pw.callFunction(pw.HandleResolve(fnName), pw.HandleResolve(param1), pw.HandleResolve(param2), pw.HandleResolve(param3))
+        return nil
+}</span>
+
+func (pw *PropsWorld) iCallFunctionWithFourParameters(fnName, param1, param2, param3, param4 string) error <span class="cov8" title="1">{
+        pw.callFunction(pw.HandleResolve(fnName), pw.HandleResolve(param1), pw.HandleResolve(param2), pw.HandleResolve(param3), pw.HandleResolve(param4))
+        return nil
+}</span>
+
+func (pw *PropsWorld) IReferToAs(from, to string) error <span class="cov8" title="1">{
+        pw.Props[to] = pw.HandleResolve(from)
+        return nil
+}</span>
+
+func (pw *PropsWorld) fieldIsArrayOfObjectsWithContents(field string, table *godog.Table) error <span class="cov8" title="1">{
+        actual := pw.HandleResolve(field)
+        actualSlice, ok := actual.([]interface{})
+        if !ok </span><span class="cov0" title="0">{
+                return fmt.Errorf("field %s is not an array", field)
+        }</span>
+        <span class="cov8" title="1">expected := tableToMaps(table)
+        return pw.matchData(actualSlice, expected)</span>
+}
+
+func (pw *PropsWorld) fieldIsArrayOfObjectsWithAtLeastContents(field string, table *godog.Table) error <span class="cov8" title="1">{
+        actual := pw.HandleResolve(field)
+        actualSlice, ok := actual.([]interface{})
+        if !ok </span><span class="cov0" title="0">{
+                return fmt.Errorf("field %s is not an array", field)
+        }</span>
+        <span class="cov8" title="1">expected := tableToMaps(table)
+        for _, expectedRow := range expected </span><span class="cov8" title="1">{
+                found := false
+                for _, actualItem := range actualSlice </span><span class="cov8" title="1">{
+                        match, _ := pw.doesRowMatch(expectedRow, actualItem)
+                        if match </span><span class="cov8" title="1">{
+                                found = true
+                                break</span>
+                        }
+                }
+                <span class="cov8" title="1">if !found </span><span class="cov0" title="0">{
+                        return fmt.Errorf("expected row not found: %+v", expectedRow)
+                }</span>
+        }
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) fieldIsArrayOfObjectsWhichDoesntContainAnyOf(field string, table *godog.Table) error <span class="cov8" title="1">{
+        actual := pw.HandleResolve(field)
+        actualSlice, ok := actual.([]interface{})
+        if !ok </span><span class="cov0" title="0">{
+                return fmt.Errorf("field %s is not an array", field)
+        }</span>
+        <span class="cov8" title="1">unwanted := tableToMaps(table)
+        for _, unwantedRow := range unwanted </span><span class="cov8" title="1">{
+                for _, actualItem := range actualSlice </span><span class="cov8" title="1">{
+                        match, _ := pw.doesRowMatch(unwantedRow, actualItem)
+                        if match </span><span class="cov0" title="0">{
+                                return fmt.Errorf("unwanted row found in array: %+v", unwantedRow)
+                        }</span>
+                }
+        }
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) fieldIsArrayOfObjectsWithLength(field, lengthField string) error <span class="cov8" title="1">{
+        actual := pw.HandleResolve(field)
+        actualSlice, ok := actual.([]interface{})
+        if !ok </span><span class="cov0" title="0">{
+                return fmt.Errorf("field %s is not an array", field)
+        }</span>
+        <span class="cov8" title="1">expectedLen, err := strconv.Atoi(fmt.Sprintf("%v", pw.HandleResolve(lengthField)))
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("invalid length: %v", lengthField)
+        }</span>
+        <span class="cov8" title="1">if len(actualSlice) != expectedLen </span><span class="cov0" title="0">{
+                return fmt.Errorf("expected length %d, got %d", expectedLen, len(actualSlice))
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) fieldIsArrayOfStringsWithValues(field string, table *godog.Table) error <span class="cov8" title="1">{
+        actual := pw.HandleResolve(field)
+        actualSlice, ok := actual.([]interface{})
+        if !ok </span><span class="cov0" title="0">{
+                return fmt.Errorf("field %s is not an array", field)
+        }</span>
+        <span class="cov8" title="1">expectedValues := make([]string, len(table.Rows)-1)
+        for i := 1; i &lt; len(table.Rows); i++ </span><span class="cov8" title="1">{
+                expectedValues[i-1] = table.Rows[i].Cells[0].Value
+        }</span>
+        <span class="cov8" title="1">if len(actualSlice) != len(expectedValues) </span><span class="cov0" title="0">{
+                return fmt.Errorf("length mismatch: expected %d, got %d", len(expectedValues), len(actualSlice))
+        }</span>
+        <span class="cov8" title="1">for i, expectedVal := range expectedValues </span><span class="cov8" title="1">{
+                actualVal := fmt.Sprintf("%v", actualSlice[i])
+                if actualVal != expectedVal </span><span class="cov0" title="0">{
+                        return fmt.Errorf("element %d mismatch: expected %s, got %s", i, expectedVal, actualVal)
+                }</span>
+        }
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) fieldIsObjectWithContents(field string, table *godog.Table) error <span class="cov8" title="1">{
+        actual := pw.HandleResolve(field)
+        if len(table.Rows) != 2 </span><span class="cov0" title="0">{
+                return fmt.Errorf("expected exactly one data row in table")
+        }</span>
+        <span class="cov8" title="1">expected := make(map[string]string)
+        for i, cell := range table.Rows[0].Cells </span><span class="cov8" title="1">{
+                expected[cell.Value] = table.Rows[1].Cells[i].Value
+        }</span>
+        <span class="cov8" title="1">actualMap, ok := actual.(map[string]interface{})
+        if !ok </span><span class="cov0" title="0">{
+                return fmt.Errorf("field %s is not an object/map", field)
+        }</span>
+        <span class="cov8" title="1">for key, expectedVal := range expected </span><span class="cov8" title="1">{
+                actualVal, exists := actualMap[key]
+                if !exists </span><span class="cov0" title="0">{
+                        return fmt.Errorf("field %s missing in actual object", key)
+                }</span>
+                <span class="cov8" title="1">if fmt.Sprintf("%v", actualVal) != expectedVal </span><span class="cov0" title="0">{
+                        return fmt.Errorf("field %s mismatch: expected %s, got %v", key, expectedVal, actualVal)
+                }</span>
+        }
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) fieldIsNil(field string) error <span class="cov8" title="1">{
+        actual := pw.HandleResolve(field)
+        if actual != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("expected %s to be null, got %v", field, actual)
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) fieldIsNotNil(field string) error <span class="cov8" title="1">{
+        actual := pw.HandleResolve(field)
+        if actual == nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("expected %s to not be null", field)
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func isTruthy(value interface{}) bool <span class="cov8" title="1">{
+        if value == nil </span><span class="cov8" title="1">{
+                return false
+        }</span>
+        <span class="cov8" title="1">switch v := value.(type) </span>{
+        case bool:<span class="cov8" title="1">
+                return v</span>
+        case int:<span class="cov8" title="1">
+                return v != 0</span>
+        case int32:<span class="cov0" title="0">
+                return v != 0</span>
+        case int64:<span class="cov0" title="0">
+                return v != 0</span>
+        case float32:<span class="cov0" title="0">
+                return v != 0</span>
+        case float64:<span class="cov8" title="1">
+                return v != 0</span>
+        case string:<span class="cov8" title="1">
+                return len(v) &gt; 0</span>
+        default:<span class="cov8" title="1">
+                return true</span>
+        }
+}
+
+func (pw *PropsWorld) fieldIsTrue(field string) error <span class="cov8" title="1">{
+        actual := pw.HandleResolve(field)
+        if !isTruthy(actual) </span><span class="cov0" title="0">{
+                return fmt.Errorf("expected %s to be truthy, got %v (type: %T)", field, actual, actual)
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) fieldIsFalse(field string) error <span class="cov8" title="1">{
+        actual := pw.HandleResolve(field)
+        if isTruthy(actual) </span><span class="cov0" title="0">{
+                return fmt.Errorf("expected %s to be falsy, got %v (type: %T)", field, actual, actual)
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) fieldIsEmpty(field string) error <span class="cov8" title="1">{
+        actual := pw.HandleResolve(field)
+        switch v := actual.(type) </span>{
+        case []interface{}:<span class="cov8" title="1">
+                if len(v) != 0 </span><span class="cov0" title="0">{
+                        return fmt.Errorf("expected %s to be empty, got length %d", field, len(v))
+                }</span>
+        case string:<span class="cov8" title="1">
+                if len(v) != 0 </span><span class="cov0" title="0">{
+                        return fmt.Errorf("expected %s to be empty, got length %d", field, len(v))
+                }</span>
+        default:<span class="cov0" title="0">
+                return fmt.Errorf("cannot check if %s is empty: unsupported type", field)</span>
+        }
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) fieldIsErrorWithMessage(field, errorType string) error <span class="cov8" title="1">{
+        actual := pw.HandleResolve(field)
+        if err, ok := actual.(error); ok </span><span class="cov8" title="1">{
+                if err.Error() != errorType </span><span class="cov0" title="0">{
+                        return fmt.Errorf("expected error message '%s', got '%s'", errorType, err.Error())
+                }</span>
+                <span class="cov8" title="1">return nil</span>
+        }
+        <span class="cov0" title="0">return fmt.Errorf("expected %s to be an error", field)</span>
+}
+
+func (pw *PropsWorld) fieldIsError(field string) error <span class="cov8" title="1">{
+        actual := pw.HandleResolve(field)
+        if _, ok := actual.(error); !ok </span><span class="cov0" title="0">{
+                return fmt.Errorf("expected %s to be an error, got %T", field, actual)
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) fieldIsNotError(field string) error <span class="cov8" title="1">{
+        actual := pw.HandleResolve(field)
+        if _, ok := actual.(error); ok </span><span class="cov0" title="0">{
+                return fmt.Errorf("expected %s to not be an error, but got: %v", field, actual)
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) fieldContains(field, substring string) error <span class="cov8" title="1">{
+        actual := pw.HandleResolve(field)
+        var actualStr string
+        if err, ok := actual.(error); ok </span><span class="cov8" title="1">{
+                actualStr = err.Error()
+        }</span> else<span class="cov8" title="1"> {
+                actualStr = fmt.Sprintf("%v", actual)
+        }</span>
+        <span class="cov8" title="1">if !strings.Contains(actualStr, substring) </span><span class="cov0" title="0">{
+                return fmt.Errorf("expected %s to contain '%s', but got '%s'", field, substring, actualStr)
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) fieldIsStringContainingOneOf(field string, table *godog.Table) error <span class="cov8" title="1">{
+        actual := pw.HandleResolve(field)
+        var actualStr string
+        if err, ok := actual.(error); ok </span><span class="cov0" title="0">{
+                actualStr = err.Error()
+        }</span> else<span class="cov8" title="1"> {
+                actualStr = fmt.Sprintf("%v", actual)
+        }</span>
+        <span class="cov8" title="1">expectedValues := make([]string, 0, len(table.Rows)-1)
+        for i := 1; i &lt; len(table.Rows); i++ </span><span class="cov8" title="1">{
+                if len(table.Rows[i].Cells) &gt; 0 </span><span class="cov8" title="1">{
+                        expectedValues = append(expectedValues, table.Rows[i].Cells[0].Value)
+                }</span>
+        }
+        <span class="cov8" title="1">for _, expected := range expectedValues </span><span class="cov8" title="1">{
+                if strings.Contains(actualStr, expected) </span><span class="cov8" title="1">{
+                        return nil
+                }</span>
+        }
+        <span class="cov0" title="0">return fmt.Errorf("expected %s to contain one of %v, but got '%s'", field, expectedValues, actualStr)</span>
+}
+
+func (pw *PropsWorld) fieldShouldBeGreaterThan(field, thresholdStr string) error <span class="cov8" title="1">{
+        actualNum, err := parseNumber(pw.HandleResolve(field))
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("cannot parse %s as number: %v", field, err)
+        }</span>
+        <span class="cov8" title="1">thresholdNum, err := parseNumber(pw.HandleResolve(thresholdStr))
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("cannot parse threshold '%s' as number: %v", thresholdStr, err)
+        }</span>
+        <span class="cov8" title="1">if actualNum &lt;= thresholdNum </span><span class="cov0" title="0">{
+                return fmt.Errorf("expected %s (%v) to be greater than %v", field, actualNum, thresholdNum)
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) fieldShouldBeLessThan(field, thresholdStr string) error <span class="cov8" title="1">{
+        actualNum, err := parseNumber(pw.HandleResolve(field))
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("cannot parse %s as number: %v", field, err)
+        }</span>
+        <span class="cov8" title="1">thresholdNum, err := parseNumber(pw.HandleResolve(thresholdStr))
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("cannot parse threshold '%s' as number: %v", thresholdStr, err)
+        }</span>
+        <span class="cov8" title="1">if actualNum &gt;= thresholdNum </span><span class="cov0" title="0">{
+                return fmt.Errorf("expected %s (%v) to be less than %v", field, actualNum, thresholdNum)
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) HandlerIsInvocationCounter(handlerName, field string) error <span class="cov8" title="1">{
+        pw.Props[field] = 0
+        pw.Props[handlerName] = func() </span><span class="cov8" title="1">{
+                count, exists := pw.Props[field]
+                if !exists </span><span class="cov0" title="0">{
+                        count = 0
+                }</span>
+                <span class="cov8" title="1">if countInt, ok := count.(int); ok </span><span class="cov8" title="1">{
+                        pw.Props[field] = countInt + 1
+                }</span> else<span class="cov0" title="0"> {
+                        pw.Props[field] = 1
+                }</span>
+        }
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) IsAnAsyncFunctionReturning(fnName, field string) error <span class="cov8" title="1">{
+        value := pw.HandleResolve(field)
+        pw.Props[fnName] = func() interface{} </span><span class="cov8" title="1">{
+                return value
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) fieldIs(field, value string) error <span class="cov8" title="1">{
+        resolved := pw.HandleResolve(value)
+        // If field has {braces}, it's a prop lookup — assertion mode
+        // If field is a bare string, it's a prop key — setter mode
+        if strings.HasPrefix(field, "{") &amp;&amp; strings.HasSuffix(field, "}") </span><span class="cov8" title="1">{
+                actual := pw.HandleResolve(field)
+                actualStr := fmt.Sprintf("%v", actual)
+                expectedStr := fmt.Sprintf("%v", resolved)
+                if actualStr != expectedStr </span><span class="cov0" title="0">{
+                        return fmt.Errorf("expected %s to equal '%s', got '%s'", field, expectedStr, actualStr)
+                }</span>
+                <span class="cov8" title="1">return nil</span>
+        }
+        <span class="cov8" title="1">pw.Props[field] = resolved
+        return nil</span>
+}
+
+func (pw *PropsWorld) waitForPeriod(ms string) error <span class="cov8" title="1">{
+        duration, err := strconv.Atoi(ms)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("invalid duration: %s", ms)
+        }</span>
+        <span class="cov8" title="1">time.Sleep(time.Duration(duration) * time.Millisecond)
+        return nil</span>
+}
+
+// Async step implementations
+
+func (pw *PropsWorld) iWaitForFunction(functionName string) error <span class="cov8" title="1">{
+        jobName := "temp_" + functionName
+        if err := pw.iStartJob(functionName, jobName); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return pw.iWaitForJob(jobName)</span>
+}
+
+func (pw *PropsWorld) iWaitForFunctionWithParameter(functionName, param1 string) error <span class="cov8" title="1">{
+        jobName := "temp_" + functionName
+        if err := pw.iStartJobWithParameter(functionName, param1, jobName); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return pw.iWaitForJob(jobName)</span>
+}
+
+func (pw *PropsWorld) iWaitForFunctionWithTwoParameters(functionName, param1, param2 string) error <span class="cov8" title="1">{
+        jobName := "temp_" + functionName
+        if err := pw.iStartJobWithTwoParameters(functionName, param1, param2, jobName); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return pw.iWaitForJob(jobName)</span>
+}
+
+func (pw *PropsWorld) iWaitForFunctionWithThreeParameters(functionName, param1, param2, param3 string) error <span class="cov8" title="1">{
+        jobName := "temp_" + functionName
+        if err := pw.iStartJobWithThreeParameters(functionName, param1, param2, param3, jobName); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return pw.iWaitForJob(jobName)</span>
+}
+
+func (pw *PropsWorld) iWaitForFunctionWithFourParameters(functionName, param1, param2, param3, param4 string) error <span class="cov8" title="1">{
+        jobName := "temp_" + functionName
+        if err := pw.iStartJobWithFourParameters(functionName, param1, param2, param3, param4, jobName); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return pw.iWaitForJob(jobName)</span>
+}
+
+func (pw *PropsWorld) iStartJob(functionName, jobName string) error <span class="cov8" title="1">{
+        pw.AsyncManager.StartTask(jobName, func(ctx context.Context) (interface{}, error) </span><span class="cov8" title="1">{
+                funcValue := pw.HandleResolve(functionName)
+                if funcValue == nil </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("function %s not found", functionName)
+                }</span>
+                <span class="cov8" title="1">fn, ok := funcValue.(func() interface{})
+                if !ok </span><span class="cov8" title="1">{
+                        // Try func()
+                        if fn0, ok2 := funcValue.(func()); ok2 </span><span class="cov8" title="1">{
+                                fn0()
+                                return nil, nil
+                        }</span>
+                        <span class="cov0" title="0">return nil, fmt.Errorf("%s is not a callable function", functionName)</span>
+                }
+                <span class="cov8" title="1">result := fn()
+                if err, ok := result.(error); ok </span><span class="cov8" title="1">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">return result, nil</span>
+        })
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) iStartJobWithParameter(functionName, param1, jobName string) error <span class="cov8" title="1">{
+        pw.AsyncManager.StartTask(jobName, func(ctx context.Context) (interface{}, error) </span><span class="cov8" title="1">{
+                funcValue := pw.HandleResolve(functionName)
+                if funcValue == nil </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("function %s not found", functionName)
+                }</span>
+                <span class="cov8" title="1">resolvedParam1 := pw.HandleResolve(param1)
+                fn, ok := funcValue.(func(string) interface{})
+                if !ok </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("%s is not a callable function with 1 parameter", functionName)
+                }</span>
+                <span class="cov8" title="1">result := fn(fmt.Sprintf("%v", resolvedParam1))
+                if err, ok := result.(error); ok </span><span class="cov8" title="1">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">return result, nil</span>
+        })
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) iStartJobWithTwoParameters(functionName, param1, param2, jobName string) error <span class="cov8" title="1">{
+        pw.AsyncManager.StartTask(jobName, func(ctx context.Context) (interface{}, error) </span><span class="cov8" title="1">{
+                funcValue := pw.HandleResolve(functionName)
+                if funcValue == nil </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("function %s not found", functionName)
+                }</span>
+                <span class="cov8" title="1">resolvedParam1 := pw.HandleResolve(param1)
+                resolvedParam2 := pw.HandleResolve(param2)
+                fn, ok := funcValue.(func(string, string) interface{})
+                if !ok </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("%s is not a callable function with 2 parameters", functionName)
+                }</span>
+                <span class="cov8" title="1">result := fn(fmt.Sprintf("%v", resolvedParam1), fmt.Sprintf("%v", resolvedParam2))
+                if err, ok := result.(error); ok </span><span class="cov8" title="1">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">return result, nil</span>
+        })
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) iStartJobWithThreeParameters(functionName, param1, param2, param3, jobName string) error <span class="cov8" title="1">{
+        pw.AsyncManager.StartTask(jobName, func(ctx context.Context) (interface{}, error) </span><span class="cov8" title="1">{
+                funcValue := pw.HandleResolve(functionName)
+                if funcValue == nil </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("function %s not found", functionName)
+                }</span>
+                <span class="cov8" title="1">resolvedParam1 := pw.HandleResolve(param1)
+                resolvedParam2 := pw.HandleResolve(param2)
+                resolvedParam3 := pw.HandleResolve(param3)
+                fn, ok := funcValue.(func(string, string, string) interface{})
+                if !ok </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("%s is not a callable function with 3 parameters", functionName)
+                }</span>
+                <span class="cov8" title="1">result := fn(fmt.Sprintf("%v", resolvedParam1), fmt.Sprintf("%v", resolvedParam2), fmt.Sprintf("%v", resolvedParam3))
+                if err, ok := result.(error); ok </span><span class="cov8" title="1">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">return result, nil</span>
+        })
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) iStartJobWithFourParameters(functionName, param1, param2, param3, param4, jobName string) error <span class="cov8" title="1">{
+        pw.AsyncManager.StartTask(jobName, func(ctx context.Context) (interface{}, error) </span><span class="cov8" title="1">{
+                funcValue := pw.HandleResolve(functionName)
+                if funcValue == nil </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("function %s not found", functionName)
+                }</span>
+                <span class="cov8" title="1">resolvedParam1 := pw.HandleResolve(param1)
+                resolvedParam2 := pw.HandleResolve(param2)
+                resolvedParam3 := pw.HandleResolve(param3)
+                resolvedParam4 := pw.HandleResolve(param4)
+                fn, ok := funcValue.(func(string, string, string, string) interface{})
+                if !ok </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("%s is not a callable function with 4 parameters", functionName)
+                }</span>
+                <span class="cov8" title="1">result := fn(fmt.Sprintf("%v", resolvedParam1), fmt.Sprintf("%v", resolvedParam2), fmt.Sprintf("%v", resolvedParam3), fmt.Sprintf("%v", resolvedParam4))
+                if err, ok := result.(error); ok </span><span class="cov8" title="1">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">return result, nil</span>
+        })
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) iWaitForJob(jobName string) error <span class="cov8" title="1">{
+        err := pw.AsyncManager.WaitForTask(jobName, 30*time.Second)
+        if err != nil </span><span class="cov8" title="1">{
+                pw.Props["result"] = err
+                pw.Props[jobName] = err
+                return nil
+        }</span>
+        <span class="cov8" title="1">result, err := pw.AsyncManager.GetTaskResult(jobName)
+        if err != nil </span><span class="cov0" title="0">{
+                pw.Props["result"] = err
+                pw.Props[jobName] = err
+        }</span> else<span class="cov8" title="1"> {
+                pw.Props["result"] = result
+                pw.Props[jobName] = result
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) iWaitForJobWithTimeout(jobName, timeoutMs string) error <span class="cov8" title="1">{
+        timeoutVal, err := strconv.Atoi(timeoutMs)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("invalid timeout: %s", timeoutMs)
+        }</span>
+        <span class="cov8" title="1">timeout := time.Duration(timeoutVal) * time.Millisecond
+        err = pw.AsyncManager.WaitForTask(jobName, timeout)
+        if err != nil </span><span class="cov0" title="0">{
+                pw.Props["result"] = err
+                pw.Props[jobName] = err
+                return nil
+        }</span>
+        <span class="cov8" title="1">result, err := pw.AsyncManager.GetTaskResult(jobName)
+        if err != nil </span><span class="cov0" title="0">{
+                pw.Props["result"] = err
+                pw.Props[jobName] = err
+        }</span> else<span class="cov8" title="1"> {
+                pw.Props["result"] = result
+                pw.Props[jobName] = result
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (pw *PropsWorld) iWaitForFunctionWithTimeout(functionName, timeoutMs string) error <span class="cov8" title="1">{
+        jobName := "temp_" + functionName
+        if err := pw.iStartJob(functionName, jobName); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return pw.iWaitForJobWithTimeout(jobName, timeoutMs)</span>
+}
+
+// tableToMaps converts a godog table to a slice of maps (skipping header row)
+func tableToMaps(table *godog.Table) []map[string]string <span class="cov8" title="1">{
+        result := make([]map[string]string, len(table.Rows)-1)
+        headers := make([]string, len(table.Rows[0].Cells))
+        for i, cell := range table.Rows[0].Cells </span><span class="cov8" title="1">{
+                headers[i] = cell.Value
+        }</span>
+        <span class="cov8" title="1">for i := 1; i &lt; len(table.Rows); i++ </span><span class="cov8" title="1">{
+                row := make(map[string]string)
+                for j, cell := range table.Rows[i].Cells </span><span class="cov8" title="1">{
+                        row[headers[j]] = cell.Value
+                }</span>
+                <span class="cov8" title="1">result[i-1] = row</span>
+        }
+        <span class="cov8" title="1">return result</span>
+}
+
+// RegisterSteps registers all step definitions with the Godog suite
+func (pw *PropsWorld) RegisterSteps(s *godog.ScenarioContext) <span class="cov8" title="1">{
+        // Function call — direct
+        s.Step(`^I call "([^"]*)"$`, pw.iCallFunction)
+        s.Step(`^I call "([^"]*)" using argument "([^"]*)"$`, pw.iCallFunctionWithParameter)
+        s.Step(`^I call "([^"]*)" using arguments "([^"]*)" and "([^"]*)"$`, pw.iCallFunctionWithTwoParameters)
+        s.Step(`^I call "([^"]*)" using arguments "([^"]*)", "([^"]*)", and "([^"]*)"$`, pw.iCallFunctionWithThreeParameters)
+        s.Step(`^I call "([^"]*)" using arguments "([^"]*)", "([^"]*)", "([^"]*)", and "([^"]*)"$`, pw.iCallFunctionWithFourParameters)
+
+        // Function call — object methods
+        s.Step(`^I call "([^"]*)" with "([^"]*)"$`, pw.iCallObjectWithMethod)
+        s.Step(`^I call "([^"]*)" with "([^"]*)" using argument "([^"]*)"$`, pw.iCallObjectWithMethodWithParameter)
+        s.Step(`^I call "([^"]*)" with "([^"]*)" using arguments "([^"]*)" and "([^"]*)"$`, pw.iCallObjectWithMethodWithTwoParameters)
+        s.Step(`^I call "([^"]*)" with "([^"]*)" using arguments "([^"]*)", "([^"]*)", and "([^"]*)"$`, pw.iCallObjectWithMethodWithThreeParameters)
+        s.Step(`^I call "([^"]*)" with "([^"]*)" using arguments "([^"]*)", "([^"]*)", "([^"]*)", and "([^"]*)"$`, pw.iCallObjectWithMethodWithFourParameters)
+
+        // Variable management
+        s.Step(`^I refer to "([^"]*)" as "([^"]*)"$`, pw.IReferToAs)
+
+        // Array/object assertions
+        s.Step(`^"([^"]*)" is an array of objects with the following contents$`, pw.fieldIsArrayOfObjectsWithContents)
+        s.Step(`^"([^"]*)" is an array of objects with at least the following contents$`, pw.fieldIsArrayOfObjectsWithAtLeastContents)
+        s.Step(`^"([^"]*)" is an array of objects which doesn't contain any of$`, pw.fieldIsArrayOfObjectsWhichDoesntContainAnyOf)
+        s.Step(`^"([^"]*)" is an array of objects with length "([^"]*)"$`, pw.fieldIsArrayOfObjectsWithLength)
+        s.Step(`^"([^"]*)" is an array of strings with the following values$`, pw.fieldIsArrayOfStringsWithValues)
+        s.Step(`^"([^"]*)" is an object with the following contents$`, pw.fieldIsObjectWithContents)
+
+        // Value assertions
+        s.Step(`^"([^"]*)" is null$`, pw.fieldIsNil)
+        s.Step(`^"([^"]*)" is nil$`, pw.fieldIsNil)
+        s.Step(`^"([^"]*)" is undefined$`, pw.fieldIsNil)
+        s.Step(`^"([^"]*)" is not null$`, pw.fieldIsNotNil)
+        s.Step(`^"([^"]*)" is not nil$`, pw.fieldIsNotNil)
+        s.Step(`^"([^"]*)" is true$`, pw.fieldIsTrue)
+        s.Step(`^"([^"]*)" is false$`, pw.fieldIsFalse)
+        s.Step(`^"([^"]*)" is empty$`, pw.fieldIsEmpty)
+        s.Step(`^"([^"]*)" is "([^"]*)"$`, pw.fieldIs)
+        s.Step(`^"([^"]*)" is an error with message "([^"]*)"$`, pw.fieldIsErrorWithMessage)
+        s.Step(`^"([^"]*)" is an error$`, pw.fieldIsError)
+        s.Step(`^"([^"]*)" is not an error$`, pw.fieldIsNotError)
+        s.Step(`^"([^"]*)" contains "([^"]*)"$`, pw.fieldContains)
+        s.Step(`^"([^"]*)" is a string containing one of$`, pw.fieldIsStringContainingOneOf)
+        s.Step(`^"([^"]*)" should be greater than "([^"]*)"$`, pw.fieldShouldBeGreaterThan)
+        s.Step(`^"([^"]*)" should be less than "([^"]*)"$`, pw.fieldShouldBeLessThan)
+
+        // Test setup
+        s.Step(`^"([^"]*)" is a invocation counter into "([^"]*)"$`, pw.HandlerIsInvocationCounter)
+        s.Step(`^"([^"]*)" is an async function returning "([^"]*)"$`, pw.IsAnAsyncFunctionReturning)
+        s.Step(`^we wait for a period of "([^"]*)" ms$`, pw.waitForPeriod)
+
+        // Async job — start
+        s.Step(`^I start "([^"]*)" as "([^"]*)"$`, pw.iStartJob)
+        s.Step(`^I start "([^"]*)" using argument "([^"]*)" as "([^"]*)"$`, pw.iStartJobWithParameter)
+        s.Step(`^I start "([^"]*)" using arguments "([^"]*)" and "([^"]*)" as "([^"]*)"$`, pw.iStartJobWithTwoParameters)
+        s.Step(`^I start "([^"]*)" using arguments "([^"]*)", "([^"]*)", and "([^"]*)" as "([^"]*)"$`, pw.iStartJobWithThreeParameters)
+        s.Step(`^I start "([^"]*)" using arguments "([^"]*)", "([^"]*)", "([^"]*)", and "([^"]*)" as "([^"]*)"$`, pw.iStartJobWithFourParameters)
+
+        // Async job — wait
+        s.Step(`^I wait for job "([^"]*)"$`, pw.iWaitForJob)
+        s.Step(`^I wait for job "([^"]*)" within "([^"]*)" ms$`, pw.iWaitForJobWithTimeout)
+
+        // Async — direct function call
+        s.Step(`^I wait for "([^"]*)"$`, pw.iWaitForFunction)
+        s.Step(`^I wait for "([^"]*)" within "([^"]*)" ms$`, pw.iWaitForFunctionWithTimeout)
+        s.Step(`^I wait for "([^"]*)" using argument "([^"]*)"$`, pw.iWaitForFunctionWithParameter)
+        s.Step(`^I wait for "([^"]*)" using arguments "([^"]*)" and "([^"]*)"$`, pw.iWaitForFunctionWithTwoParameters)
+        s.Step(`^I wait for "([^"]*)" using arguments "([^"]*)", "([^"]*)", and "([^"]*)"$`, pw.iWaitForFunctionWithThreeParameters)
+        s.Step(`^I wait for "([^"]*)" using arguments "([^"]*)", "([^"]*)", "([^"]*)", and "([^"]*)"$`, pw.iWaitForFunctionWithFourParameters)
+}</span>
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

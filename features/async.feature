@@ -28,3 +28,53 @@ Feature: Async steps
     When I start "{handler}" as "timedJob"
     And I wait for job "timedJob" within "5000" ms
     Then "{count}" is "1"
+
+  Scenario: Async function returning after delay
+    Given "delayedValue" is "delayed-result"
+    And "delayedFn" is an async function returning "{delayedValue}" after "50" ms
+    When I wait for "{delayedFn}"
+    Then "{result}" is "delayed-result"
+
+  Scenario: Wait for function with one argument
+    Given "echoFn" is "{singleArgFn}"
+    When I wait for "{echoFn}" using argument "hello"
+    Then "{result}" is "hello"
+
+  Scenario: Wait for function with two arguments
+    Given "concatFn" is "{twoArgFn}"
+    When I wait for "{concatFn}" using arguments "Hello" and "World"
+    Then "{result}" is "HelloWorld"
+
+  Scenario: Wait for function with three arguments
+    Given "threeArgFn" is "{threeArgConcatFn}"
+    When I wait for "{threeArgFn}" using arguments "A", "B", and "C"
+    Then "{result}" is "ABC"
+
+  Scenario: Wait for function with four arguments
+    Given "fourArgFn" is "{fourArgConcatFn}"
+    When I wait for "{fourArgFn}" using arguments "1", "2", "3", and "4"
+    Then "{result}" is "1234"
+
+  Scenario: Start job with one argument
+    Given "echoFn" is "{singleArgFn}"
+    When I start "{echoFn}" using argument "jobArg" as "argJob"
+    And I wait for job "argJob"
+    Then "{result}" is "jobArg"
+
+  Scenario: Start job with two arguments
+    Given "concatFn" is "{twoArgFn}"
+    When I start "{concatFn}" using arguments "Job" and "Args" as "twoArgJob"
+    And I wait for job "twoArgJob"
+    Then "{result}" is "JobArgs"
+
+  Scenario: Start job with three arguments
+    Given "threeArgFn" is "{threeArgConcatFn}"
+    When I start "{threeArgFn}" using arguments "X", "Y", and "Z" as "threeArgJob"
+    And I wait for job "threeArgJob"
+    Then "{result}" is "XYZ"
+
+  Scenario: Start job with four arguments
+    Given "fourArgFn" is "{fourArgConcatFn}"
+    When I start "{fourArgFn}" using arguments "P", "Q", "R", and "S" as "fourArgJob"
+    And I wait for job "fourArgJob"
+    Then "{result}" is "PQRS"

@@ -54,3 +54,24 @@ Feature: Assertion steps
     Given "handler" is a invocation counter into "count"
     When I call "{handler}"
     Then "{count}" should be less than "5"
+
+  Scenario: Assert is an error with specific message
+    Given "errorFn" is "{errorThrowingFn}"
+    When I call "{errorFn}"
+    Then "{result}" is an error with message "Test error message"
+
+  Scenario: Assert is null
+    Given "nullValue" is "{null}"
+    Then "{nullValue}" is null
+
+  Scenario: Assert empty string is falsy
+    Given "emptyStr" is ""
+    Then "{emptyStr}" is false
+
+  Scenario: Assert numeric zero is falsy
+    Given "zero" is "{0}"
+    Then "{zero}" is false
+
+  Scenario: Assert non-zero number is truthy
+    Given "num" is "{42}"
+    Then "{num}" is true
