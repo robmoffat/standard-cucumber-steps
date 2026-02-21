@@ -8,5 +8,8 @@
   },
   "generator": {
     "allowDebugGeneratedFiles": false
-  }
+  },
+  "stepAssemblies": [
+    { "assembly": "StandardCucumberSteps" }
+  ]
 }

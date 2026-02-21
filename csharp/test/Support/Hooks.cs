@@ -36,16 +36,6 @@ public class Hooks
         _world.Set("fourArgConcatFn", (Func<object?, object?, object?, object?, Task<object?>>)((a, b, c, d) => 
             Task.FromResult<object?>($"{a}{b}{c}{d}")));
 
-        // Typed (non-object?) delegates — exercise the generic Delegate fallback paths
-        // Func<string> is not covariant to Func<object?> so goes via DynamicInvoke in CallFunctional
-        _world.Set("syncReturnFn", (Func<string>)(() => "sync-value"));
-        // Func<Task<string>> is not Task<object?> so hits the generic Task branch in CallFunctional
-        _world.Set("typedAsyncFn", (Func<Task<string>>)(() => Task.FromResult("typed-async-value")));
-        // Func<object?,string> returns a plain string (not Task) so hits the sync-return branch in CallFunctionalWithArgs
-        _world.Set("syncArgFn", (Func<object?, string>)(arg => $"echo:{arg}"));
-        // Func<object?,Task<string>> hits the generic Task branch in CallFunctionalWithArgs
-        _world.Set("typedAsyncArgFn", (Func<object?, Task<string>>)(arg => Task.FromResult($"async:{arg}")));
-
         // Error throwing functions
         _world.Set("errorThrowingFn", (Func<Task<object?>>)(() =>
             throw new InvalidOperationException("Test error message")));
