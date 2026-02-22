@@ -4,6 +4,7 @@ dist/
 .c8_output/
 coverage/
 reports/
+typescript/README.md
 
 # Java / Maven
 target/

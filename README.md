@@ -124,6 +124,15 @@ The same feature files run across all supported languages, producing consistent 
 
 ![Go test output](docs/images/go-example.png)
 
+### Bank account examples
+
+The `examples/` directory contains two small runnable TypeScript projects that illustrate the difference between the anti-pattern and the correct approach:
+
+| Example | Description |
+|---------|-------------|
+| [`examples/wrong`](examples/wrong) | Agent-generated bespoke step definitions — hardcoded to specific values, breaks on the second scenario |
+| [`examples/right`](examples/right) | SCS-based — a single setup hook, both scenarios pass with zero additional glue code |
+
 ---
 
 ## Step Reference
