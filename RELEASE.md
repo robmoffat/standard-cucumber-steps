@@ -85,36 +85,13 @@ Configure these in **Settings → Secrets and variables → Actions**:
 
 ## Releasing
 
-### 1. Set the version
+### 1. Set the C# and TS version
 
-Update the version number in all language manifests at once:
+Update the version number in `typescript/package.json` and `csharp/src/StandardCucumberSteps.csproj`
 
-```bash
-scripts/set-version.sh 0.2.0
-```
+Review the diff, then commit and push.
 
-This updates `typescript/package.json`, `java/pom.xml`, and `csharp/src/StandardCucumberSteps.csproj`. Go has no version file — its version is determined by the git tag alone.
-
-Review the diff, then commit:
-
-```bash
-git diff
-git add typescript/package.json java/pom.xml csharp/src/StandardCucumberSteps.csproj
-git commit -m "chore: bump version to 0.2.0"
-git push origin main
-```
-
-### 2. Verify all versions match
-
-Before tagging, confirm there are no mismatches:
-
-```bash
-scripts/check-version.sh 0.2.0
-```
-
-This prints a pass/fail for each manifest and exits non-zero if anything is wrong.
-
-### 3. Push the release tags
+### 2. Push the release tags
 
 Once the check passes, create and push the tags. TypeScript, Java, and C# share a tag; Go uses a separate namespace (required because its module is in a subdirectory):
 
@@ -135,6 +112,12 @@ This triggers three workflows in parallel for the shared tag:
 
 And one workflow for the Go tag:
 - `release-go.yml` → runs tests, creates a GitHub Release, and the Go module proxy picks up the new version
+
+## 3. Update Java Version
+
+Set the java version to the _next_ version number with -SNAPSHOT on the end.
+
+Commit and push
 
 ### Verifying Releases
 
