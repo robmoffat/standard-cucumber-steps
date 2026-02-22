@@ -1,5 +1,10 @@
 # Standard Cucumber Steps
 
+[![npm](https://img.shields.io/npm/v/%40robmoffat%2Fstandard-cucumber-steps?label=npm)](https://www.npmjs.com/package/@robmoffat/standard-cucumber-steps)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.robmoffat/standard-cucumber-steps?label=maven)](https://central.sonatype.com/artifact/io.github.robmoffat/standard-cucumber-steps)
+[![NuGet](https://img.shields.io/nuget/v/StandardCucumberSteps?label=nuget)](https://www.nuget.org/packages/StandardCucumberSteps)
+[![Go](https://img.shields.io/github/v/tag/robmoffat/standard-cucumber-steps?filter=go%2F*&label=go)](https://pkg.go.dev/github.com/robmoffat/standard-cucumber-steps/go)
+
 TLDR: Reusable Cucumber step definitions for TypeScript, Java, Go, and C# — a single canonical DSL for BDD testing across languages.  An excellent fit for hands-off, agentic code development.
 
 ## What this is

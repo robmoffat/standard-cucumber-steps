@@ -65,7 +65,7 @@ class BankAccount {
 }
 ```
 
-This is an extreme example, but it shows clearly how we could go off the tracks very easily.  Further, adding extra tests might just mean the agent adds new methods such as `add30Dollars`, `remove40Dollars` etc.
+But we didn't want methods like this!  We wanted to pass arguments for the amount to add and withdraw.  Obviously, this is an overly simplistic example, but it demonstrates a class of problems that occurs all the time.  Further, adding extra tests might just mean the agent adds new methods such as `add30Dollars`, `remove40Dollars` etc.
 
 A runnable version of this anti-pattern is in [`examples/wrong`](../examples/wrong).
 
@@ -100,7 +100,7 @@ A runnable version of this correct pattern is in [`examples/right`](../examples/
 
 ## Living documentation that agents can maintain
 
-When an agent refactors code, the risk is that it changes behaviour without realising it. With BDD, the scenarios are the authoritative record of intended behaviour, and they run on every change. If a refactor breaks a scenario, the agent is immediately told which behaviour changed and can decide whether that was intentional.
+When an agent refactors code, the risk is that it changes API contracts without you realising it. With BDD, the scenarios are the authoritative record of intended behaviour, and they run on every change. If a refactor breaks a scenario, the agent is immediately told which behaviour changed and can decide whether that was intentional.
 
 This also means agents can keep documentation accurate. If a feature file describes a behaviour that no longer exists, the scenario fails — making stale documentation visible rather than hidden in comments or wikis.
 
