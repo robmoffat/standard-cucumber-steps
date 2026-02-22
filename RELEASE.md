@@ -85,38 +85,56 @@ Configure these in **Settings → Secrets and variables → Actions**:
 
 ## Releasing
 
-### Release TypeScript, Java, and C#
+### 1. Set the version
 
-These three packages share a version and are released together:
+Update the version number in all language manifests at once:
 
 ```bash
-# Ensure you're on main with a clean working directory
-git checkout main
-git pull origin main
-
-# Create and push the version tag
-git tag v0.2.0
-git push origin v0.2.0
+scripts/set-version.sh 0.2.0
 ```
 
-This triggers three workflows in parallel:
-- `release-typescript.yml` → publishes `@robmoffat/standard-cucumber-steps` to npm
-- `release-java.yml` → publishes `io.github.robmoffat:standard-cucumber-steps` to Maven Central
-- `release-csharp.yml` → publishes `StandardCucumberSteps` to NuGet
+This updates `typescript/package.json`, `java/pom.xml`, and `csharp/src/StandardCucumberSteps.csproj`. Go has no version file — its version is determined by the git tag alone.
 
-### Release Go
-
-Go uses a separate tag namespace (required because the module is in a subdirectory):
+Review the diff, then commit:
 
 ```bash
+git diff
+git add typescript/package.json java/pom.xml csharp/src/StandardCucumberSteps.csproj
+git commit -m "chore: bump version to 0.2.0"
+git push origin main
+```
+
+### 2. Verify all versions match
+
+Before tagging, confirm there are no mismatches:
+
+```bash
+scripts/check-version.sh 0.2.0
+```
+
+This prints a pass/fail for each manifest and exits non-zero if anything is wrong.
+
+### 3. Push the release tags
+
+Once the check passes, create and push the tags. TypeScript, Java, and C# share a tag; Go uses a separate namespace (required because its module is in a subdirectory):
+
+```bash
+# TypeScript, Java, C#
+git tag v0.2.0
+git push origin v0.2.0
+
+# Go
 git tag go/v0.2.0
 git push origin go/v0.2.0
 ```
 
-This triggers `release-go.yml`, which:
-- Runs tests
-- Creates a GitHub Release
-- The Go module proxy automatically picks up the new version
+This triggers three workflows in parallel for the shared tag:
+- `release-typescript.yml` → publishes `@robmoffat/standard-cucumber-steps` to npm
+- `release-java.yml` → publishes `io.github.robmoffat:standard-cucumber-steps` to Maven Central
+- `release-csharp.yml` → publishes `StandardCucumberSteps` to NuGet
+
+And one workflow for the Go tag:
+- `release-go.yml` → runs tests, creates a GitHub Release, and the Go module proxy picks up the new version
 
 ### Verifying Releases
 

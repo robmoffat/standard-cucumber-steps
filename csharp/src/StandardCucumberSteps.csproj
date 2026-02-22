@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <PackageId>StandardCucumberSteps</PackageId>
-    <Version>0.1.0</Version>
+    <Version>1.0.2</Version>
     <Authors>Rob Moffat</Authors>
     <Description>Reusable Cucumber step definitions for C# with Reqnroll</Description>
     <Nullable>enable</Nullable>

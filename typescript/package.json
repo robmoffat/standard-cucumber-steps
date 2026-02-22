@@ -1,6 +1,6 @@
 {
   "name": "@robmoffat/standard-cucumber-steps",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Reusable Cucumber step definitions for TypeScript",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
