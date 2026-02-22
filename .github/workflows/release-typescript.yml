@@ -1,6 +1,11 @@
 name: Release TypeScript
 
 on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 1.0.0)'
+        required: true
   push:
     tags:
       - "v*"
@@ -28,9 +33,14 @@ jobs:
 
       - run: npm run build
 
-      - name: Extract version from tag
+      - name: Extract version
         id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          fi
 
       - name: Update package.json version
         run: npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
