@@ -8,15 +8,21 @@ This document describes how to release Standard Cucumber Steps to npm, Maven Cen
 
 #### npm (TypeScript)
 
-1. Create an npm account at https://www.npmjs.com/
-2. Generate a **Granular Access Token** at https://www.npmjs.com/settings/~/tokens
-   - Click "Generate New Token" → "Granular Access Token"
-   - Set expiration (up to 365 days, or no expiration)
-   - Under "Packages and scopes", select "Read and write"
-   - For first publish: select "All packages" (you can't scope to a package that doesn't exist yet)
-   - After first publish: you can create a new token scoped to just `@robmoffat/standard-cucumber-steps`
-3. Add the token as `NPM_TOKEN` in GitHub Secrets
-4. Set a calendar reminder to rotate the token before expiration
+npm publishing uses **Trusted Publishing** (OIDC) — no long-lived token is stored anywhere. Each publish gets a short-lived credential from GitHub Actions automatically.
+
+**One-time setup on npmjs.com** (required before the first CI publish):
+
+1. Go to https://www.npmjs.com/package/@robmoffat/standard-cucumber-steps → **Settings**
+2. Under **"Trusted publishing"**, click **"Add a trusted publisher"**
+3. Select **GitHub Actions** and fill in:
+   - **Repository owner**: `robmoffat`
+   - **Repository name**: `standard-cucumber-steps`
+   - **Workflow filename**: `release-typescript.yml` (must match exactly, case-sensitive)
+4. Save
+
+Once configured, the workflow will publish automatically without any secrets. No `NPM_TOKEN` is required.
+
+> **Requirements**: npm Trusted Publishing requires Node.js ≥ 22.14.0 and npm CLI ≥ 11.5.1. The workflow is pinned to Node 22 to satisfy this. Provenance attestation is generated automatically by the registry when publishing via trusted publishing.
 
 #### Maven Central (Java)
 
@@ -49,8 +55,8 @@ Maven Central requires more setup than other registries:
    Copy the entire output (including `-----BEGIN PGP PRIVATE KEY BLOCK-----`).
 
 5. **Add secrets to GitHub**:
-   - `OSSRH_USERNAME` — Your Sonatype JIRA username
-   - `OSSRH_TOKEN` — Your Sonatype JIRA password (or a generated token)
+   - `CENTRAL_USERNAME` — Your Sonatype Central Portal username
+   - `CENTRAL_PASSWORD` — Your Sonatype Central Portal password or token
    - `GPG_PRIVATE_KEY` — The exported private key from step 4
    - `GPG_PASSPHRASE` — The passphrase you set when generating the key
 
@@ -74,7 +80,6 @@ Configure these in **Settings → Secrets and variables → Actions**:
 
 | Secret | Registry | Description |
 |--------|----------|-------------|
-| `NPM_TOKEN` | npm | Automation token from npmjs.com |
 | `OSSRH_USERNAME` | Maven Central | Sonatype JIRA username |
 | `OSSRH_TOKEN` | Maven Central | Sonatype JIRA password/token |
 | `GPG_PRIVATE_KEY` | Maven Central | Armored GPG private key |

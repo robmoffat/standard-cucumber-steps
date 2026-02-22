@@ -19,7 +19,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'          # Trusted Publishing requires Node >= 22.14.0
           registry-url: 'https://registry.npmjs.org'
 
       - run: npm ci
@@ -36,4 +36,4 @@ jobs:
         run: npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
 
       - name: Publish to npm (Trusted Publishing)
-        run: npm publish --access public --provenance
+        run: npm publish --access public
