@@ -140,6 +140,7 @@ The `examples/` directory contains two small runnable TypeScript projects that i
 Full documentation with examples for each step group:
 
 - [Variables](docs/variables.md) — storing and referencing props, boolean/null/numeric literals
+- [JSONPath](docs/jsonpath.md) — navigating nested objects and arrays inside `{...}` references
 - [Assertions](docs/assertions.md) — equality, contains, numeric comparisons, error assertions
 - [Method Calls](docs/method-calls.md) — calling functions and object methods
 - [Async Steps](docs/async.md) — async functions and background jobs
@@ -155,6 +156,18 @@ Full documentation with examples for each step group:
 | `When I refer to "{from}" as "to"` | Alias (copy) one prop to another |
 | `{varName}` | Prop lookup in any step argument |
 | `{null}` `{true}` `{false}` `{42}` | Literal values |
+
+### [JSONPath](docs/jsonpath.md)
+
+Any `{...}` reference containing a dot or bracket is resolved as a path into the stored object. This applies in step arguments and DataTable column headers.
+
+| Syntax | Meaning |
+|--------|---------|
+| `{obj.field}` | Property of a stored object |
+| `{obj.a.b.c}` | Nested property access |
+| `{arr[0]}` | First element of a stored array |
+| `{arr[1].name}` | Property of an array element |
+| `address.city` *(DataTable header)* | Match a nested field in each array row |
 
 ### [Assertions](docs/assertions.md)
 

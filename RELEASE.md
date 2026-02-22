@@ -85,15 +85,9 @@ Configure these in **Settings → Secrets and variables → Actions**:
 
 ## Releasing
 
-### 1. Set the C# and TS version
+### 1. Push the release tags
 
-Update the version number in `typescript/package.json` and `csharp/src/StandardCucumberSteps.csproj`
-
-Review the diff, then commit and push.
-
-### 2. Push the release tags
-
-Once the check passes, create and push the tags. TypeScript, Java, and C# share a tag; Go uses a separate namespace (required because its module is in a subdirectory):
+TypeScript, Java, and C# share a tag; Go uses a separate namespace (required because its module is in a subdirectory):
 
 ```bash
 # TypeScript, Java, C#
@@ -113,13 +107,7 @@ This triggers three workflows in parallel for the shared tag:
 And one workflow for the Go tag:
 - `release-go.yml` → runs tests, creates a GitHub Release, and the Go module proxy picks up the new version
 
-## 3. Update Java Version
-
-Set the java version to the _next_ version number with -SNAPSHOT on the end.
-
-Commit and push
-
-### Verifying Releases
+### 2. Verifying Releases
 
 After pushing tags, check the Actions tab for workflow status. Once complete:
 
