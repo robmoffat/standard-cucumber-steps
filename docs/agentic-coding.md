@@ -1,6 +1,6 @@
-# BDD and SCS for AI Agentic Coding
+# BDD (and Standard Cucumber Steps) is a great fit for AI Agentic Coding
 
-TLDR; AI coding agents — tools like Claude Code, Copilot Workspace, Devin, and similar systems — are increasingly used to generate code autonomously. BDD with Standard Cucumber Steps is a particularly good fit for this style of development as it simplifies the review process and reduces the scope for agent hallucination.
+TLDR; AI coding agents — tools like Claude Code, Copilot Workspace, Devin, and similar systems — are increasingly used to generate code autonomously. BDD with Standard Cucumber Steps is a particularly good fit for this style of development as it simplifies the review process and reduces the scope for agent hallucination / goal gaming.
 
 ---
 
