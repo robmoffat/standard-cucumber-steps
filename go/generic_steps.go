@@ -336,6 +336,60 @@ func parseNumber(val interface{}) (float64, error) {
 	}
 }
 
+// convertArg converts an argument value to match the expected parameter type
+// This handles numeric type coercion (e.g., float64 -> int) and string conversions
+func convertArg(targetType reflect.Type, arg interface{}) reflect.Value {
+	argValue := reflect.ValueOf(arg)
+	
+	// If arg is nil, return zero value of target type
+	if arg == nil {
+		return reflect.Zero(targetType)
+	}
+	
+	// If already assignable, return as-is
+	if argValue.Type().AssignableTo(targetType) {
+		return argValue
+	}
+	
+	// Handle numeric conversions
+	switch targetType.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		if num, err := parseNumber(arg); err == nil {
+			return reflect.ValueOf(int64(num)).Convert(targetType)
+		}
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		if num, err := parseNumber(arg); err == nil {
+			return reflect.ValueOf(uint64(num)).Convert(targetType)
+		}
+	case reflect.Float32, reflect.Float64:
+		if num, err := parseNumber(arg); err == nil {
+			return reflect.ValueOf(num).Convert(targetType)
+		}
+	case reflect.String:
+		// Convert any type to string
+		return reflect.ValueOf(fmt.Sprintf("%v", arg))
+	}
+	
+	// If conversion not possible, return original value
+	return argValue
+}
+
+// convertArgs converts a slice of arguments to match the method's parameter types
+func convertArgs(method reflect.Value, args []interface{}) []reflect.Value {
+	methodType := method.Type()
+	result := make([]reflect.Value, len(args))
+	
+	for i, arg := range args {
+		if i < methodType.NumIn() {
+			result[i] = convertArg(methodType.In(i), arg)
+		} else {
+			result[i] = reflect.ValueOf(arg)
+		}
+	}
+	
+	return result
+}
+
 // Step implementations
 
 func (pw *PropsWorld) iCallFunction(fnName string) error {
@@ -368,7 +422,8 @@ func (pw *PropsWorld) iCallObjectWithMethodWithParameter(field, fnName, param st
 		return nil
 	}
 	defer pw.recoverFromMethodCallPanic(field, fnName, param)
-	results := method.Call([]reflect.Value{reflect.ValueOf(paramVal)})
+	args := convertArgs(method, []interface{}{paramVal})
+	results := method.Call(args)
 	pw.handleMethodResultsSync(results)
 	return nil
 }
@@ -382,10 +437,11 @@ func (pw *PropsWorld) iCallObjectWithMethodWithTwoParameters(field, fnName, para
 		return nil
 	}
 	defer pw.recoverFromMethodCallPanic(field, fnName, param1, param2)
-	results := method.Call([]reflect.Value{
-		reflect.ValueOf(pw.HandleResolve(param1)),
-		reflect.ValueOf(pw.HandleResolve(param2)),
+	args := convertArgs(method, []interface{}{
+		pw.HandleResolve(param1),
+		pw.HandleResolve(param2),
 	})
+	results := method.Call(args)
 	pw.handleMethodResultsSync(results)
 	return nil
 }
@@ -399,11 +455,12 @@ func (pw *PropsWorld) iCallObjectWithMethodWithThreeParameters(field, fnName, pa
 		return nil
 	}
 	defer pw.recoverFromMethodCallPanic(field, fnName, param1, param2, param3)
-	results := method.Call([]reflect.Value{
-		reflect.ValueOf(pw.HandleResolve(param1)),
-		reflect.ValueOf(pw.HandleResolve(param2)),
-		reflect.ValueOf(pw.HandleResolve(param3)),
+	args := convertArgs(method, []interface{}{
+		pw.HandleResolve(param1),
+		pw.HandleResolve(param2),
+		pw.HandleResolve(param3),
 	})
+	results := method.Call(args)
 	pw.handleMethodResultsSync(results)
 	return nil
 }
@@ -417,12 +474,13 @@ func (pw *PropsWorld) iCallObjectWithMethodWithFourParameters(field, fnName, par
 		return nil
 	}
 	defer pw.recoverFromMethodCallPanic(field, fnName, param1, param2, param3, param4)
-	results := method.Call([]reflect.Value{
-		reflect.ValueOf(pw.HandleResolve(param1)),
-		reflect.ValueOf(pw.HandleResolve(param2)),
-		reflect.ValueOf(pw.HandleResolve(param3)),
-		reflect.ValueOf(pw.HandleResolve(param4)),
+	args := convertArgs(method, []interface{}{
+		pw.HandleResolve(param1),
+		pw.HandleResolve(param2),
+		pw.HandleResolve(param3),
+		pw.HandleResolve(param4),
 	})
+	results := method.Call(args)
 	pw.handleMethodResultsSync(results)
 	return nil
 }

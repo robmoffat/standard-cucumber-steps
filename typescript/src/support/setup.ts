@@ -70,4 +70,13 @@ Before(function (this: PropsWorld) {
         { name: 'Alice', address: { city: 'New York', zip: '10001' } },
         { name: 'Bob', address: { city: 'Los Angeles', zip: '90001' } }
     ];
+
+    this.props['typedValues'] = {
+        count: 42,
+        price: 9.99,
+        active: true,
+        deleted: false,
+        label: 'hello',
+        nested: { score: 100, enabled: true }
+    };
 });

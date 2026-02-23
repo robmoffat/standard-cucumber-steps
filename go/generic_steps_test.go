@@ -114,6 +114,18 @@ func setupTestFixtures(world *generic.PropsWorld) {
 			},
 		},
 	}
+
+	world.Props["typedValues"] = map[string]interface{}{
+		"count":   42,
+		"price":   9.99,
+		"active":  true,
+		"deleted": false,
+		"label":   "hello",
+		"nested": map[string]interface{}{
+			"score":   100,
+			"enabled": true,
+		},
+	}
 }
 
 func TestFeatures(t *testing.T) {

@@ -15,6 +15,10 @@ Feature: JSONPath variable resolution
   userArray:
     [ { name: "Alice", address: { city: "New York", zip: "10001" } },
       { name: "Bob", address: { city: "Los Angeles", zip: "90001" } } ]
+
+  typedValues:
+    { count: 42, price: 9.99, active: true, deleted: false, label: "hello",
+      nested: { score: 100, enabled: true } }
   # Simple nested property access using dot notation
 
   Scenario: Access nested property with dot notation
@@ -63,3 +67,28 @@ Feature: JSONPath variable resolution
     Then "{users}" is an array of objects with at least the following contents
       | address.city |
       | New York     |
+  # Numeric and boolean property types
+
+  Scenario: Access an integer property
+    Given I set "obj" to "{typedValues}"
+    Then "{obj.count}" is "42"
+
+  Scenario: Access a decimal property
+    Given I set "obj" to "{typedValues}"
+    Then "{obj.price}" is "9.99"
+
+  Scenario: Access a boolean true property
+    Given I set "obj" to "{typedValues}"
+    Then "{obj.active}" is true
+
+  Scenario: Access a boolean false property
+    Given I set "obj" to "{typedValues}"
+    Then "{obj.deleted}" is false
+
+  Scenario: Access a nested integer property
+    Given I set "obj" to "{typedValues}"
+    Then "{obj.nested.score}" is "100"
+
+  Scenario: Access a nested boolean property
+    Given I set "obj" to "{typedValues}"
+    Then "{obj.nested.enabled}" is true
