@@ -512,7 +512,7 @@ func (pw *PropsWorld) IReferToAs(from, to string) error {
 
 func (pw *PropsWorld) fieldIsArrayOfObjectsWithContents(field string, table *godog.Table) error {
 	actual := pw.HandleResolve(field)
-	actualSlice, ok := actual.([]interface{})
+	actualSlice, ok := toInterfaceSlice(actual)
 	if !ok {
 		return fmt.Errorf("field %s is not an array", field)
 	}
@@ -522,7 +522,7 @@ func (pw *PropsWorld) fieldIsArrayOfObjectsWithContents(field string, table *god
 
 func (pw *PropsWorld) fieldIsArrayOfObjectsWithAtLeastContents(field string, table *godog.Table) error {
 	actual := pw.HandleResolve(field)
-	actualSlice, ok := actual.([]interface{})
+	actualSlice, ok := toInterfaceSlice(actual)
 	if !ok {
 		return fmt.Errorf("field %s is not an array", field)
 	}
@@ -545,7 +545,7 @@ func (pw *PropsWorld) fieldIsArrayOfObjectsWithAtLeastContents(field string, tab
 
 func (pw *PropsWorld) fieldIsArrayOfObjectsWhichDoesntContainAnyOf(field string, table *godog.Table) error {
 	actual := pw.HandleResolve(field)
-	actualSlice, ok := actual.([]interface{})
+	actualSlice, ok := toInterfaceSlice(actual)
 	if !ok {
 		return fmt.Errorf("field %s is not an array", field)
 	}
@@ -563,7 +563,7 @@ func (pw *PropsWorld) fieldIsArrayOfObjectsWhichDoesntContainAnyOf(field string,
 
 func (pw *PropsWorld) fieldIsArrayOfObjectsWithLength(field, lengthField string) error {
 	actual := pw.HandleResolve(field)
-	actualSlice, ok := actual.([]interface{})
+	actualSlice, ok := toInterfaceSlice(actual)
 	if !ok {
 		return fmt.Errorf("field %s is not an array", field)
 	}
@@ -579,7 +579,7 @@ func (pw *PropsWorld) fieldIsArrayOfObjectsWithLength(field, lengthField string)
 
 func (pw *PropsWorld) fieldIsArrayOfStringsWithValues(field string, table *godog.Table) error {
 	actual := pw.HandleResolve(field)
-	actualSlice, ok := actual.([]interface{})
+	actualSlice, ok := toInterfaceSlice(actual)
 	if !ok {
 		return fmt.Errorf("field %s is not an array", field)
 	}
@@ -1040,6 +1040,27 @@ func (pw *PropsWorld) iWaitForFunctionWithTimeout(functionName, timeoutMs string
 		return err
 	}
 	return pw.iWaitForJobWithTimeout(jobName, timeoutMs)
+}
+
+// toInterfaceSlice converts any slice type to []interface{}
+// This is needed because Go doesn't allow direct type assertion from []T to []interface{}
+func toInterfaceSlice(slice interface{}) ([]interface{}, bool) {
+	// First try direct type assertion
+	if s, ok := slice.([]interface{}); ok {
+		return s, true
+	}
+
+	// Use reflection to handle typed slices like []LogEntry
+	v := reflect.ValueOf(slice)
+	if v.Kind() != reflect.Slice {
+		return nil, false
+	}
+
+	result := make([]interface{}, v.Len())
+	for i := 0; i < v.Len(); i++ {
+		result[i] = v.Index(i).Interface()
+	}
+	return result, true
 }
 
 // tableToMaps converts a godog table to a slice of maps (skipping header row)
