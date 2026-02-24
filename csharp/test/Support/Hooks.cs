@@ -95,6 +95,16 @@ public class Hooks
                 ["address"] = new Dictionary<string, object?> { ["city"] = "Los Angeles", ["zip"] = "90001" } 
             }
         });
+
+        _world.Set("typedValues", new Dictionary<string, object?>
+        {
+            ["count"] = 42,
+            ["price"] = 9.99,
+            ["active"] = true,
+            ["deleted"] = false,
+            ["label"] = "hello",
+            ["nested"] = new Dictionary<string, object?> { ["score"] = 100, ["enabled"] = true }
+        });
     }
 
     public class TestCalculator

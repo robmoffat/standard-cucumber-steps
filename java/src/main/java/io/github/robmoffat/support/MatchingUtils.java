@@ -47,7 +47,11 @@ public final class MatchingUtils {
                 result = ((java.util.Optional<?>) result).orElse(null);
             }
             if (result instanceof Number) {
-                return String.valueOf(Math.round(((Number) result).doubleValue()));
+                double d = ((Number) result).doubleValue();
+                if (d == Math.floor(d) && !Double.isInfinite(d)) {
+                    return (long) d;
+                }
+                return d;
             }
             return result;
         } catch (JXPathNotFoundException e) {
