@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,8 +25,42 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public final class MatchingUtils {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final List<RowFieldMatcher> FIELD_MATCHERS = new CopyOnWriteArrayList<>();
+    private static final String REGEX_SUFFIX = "_regex";
 
     private MatchingUtils() {
+    }
+
+    public static void registerFieldMatcher(RowFieldMatcher matcher) {
+        FIELD_MATCHERS.add(matcher);
+    }
+
+    public static void clearFieldMatchers() {
+        FIELD_MATCHERS.clear();
+    }
+
+    /** Path within row data for a column ending with {@code suffix}, or null if not applicable. */
+    public static String pathForFieldSuffix(String field, String suffix) {
+        if (!field.endsWith(suffix)) {
+            return null;
+        }
+        if (field.length() == suffix.length()) {
+            return "";
+        }
+        String stem = field.substring(0, field.length() - suffix.length());
+        if (stem.endsWith(".")) {
+            stem = stem.substring(0, stem.length() - 1);
+        }
+        return stem;
+    }
+
+    private static RowFieldMatcher findFieldMatcher(String field) {
+        for (RowFieldMatcher matcher : FIELD_MATCHERS) {
+            if (matcher.matchesField(field)) {
+                return matcher;
+            }
+        }
+        return null;
     }
 
     private static Object extractFromWorld(Object world, String expression) {
@@ -99,6 +134,14 @@ public final class MatchingUtils {
             String field = entry.getKey();
             String expected = entry.getValue();
 
+            RowFieldMatcher matcher = findFieldMatcher(field);
+            if (matcher != null) {
+                if (!matcher.matchField(world, field, expected, data)) {
+                    return false;
+                }
+                continue;
+            }
+
             try {
                 Object found = extractFromWorld(data, field);
                 Object resolved = handleResolve(expected, world);
@@ -118,6 +161,36 @@ public final class MatchingUtils {
         }
 
         return true;
+    }
+
+    /** Test-only matcher registered from {@link io.github.robmoffat.TestHooks}. */
+    public static RowFieldMatcher createRegexFieldMatcher() {
+        return new RowFieldMatcher() {
+            @Override
+            public boolean matchesField(String field) {
+                return field.endsWith(REGEX_SUFFIX);
+            }
+
+            @Override
+            public boolean matchField(PropsWorld world, String field, String expected, Object rowData) {
+                String path = pathForFieldSuffix(field, REGEX_SUFFIX);
+                if (path == null) {
+                    return false;
+                }
+                Object found = path.isEmpty() ? rowData : extractFromWorld(rowData, path);
+                String foundStr = found == null ? "" : String.valueOf(found);
+                try {
+                    if (!Pattern.compile(expected).matcher(foundStr).find()) {
+                        world.log(String.format("Regex match failed on %s: '%s' vs /%s/", field, foundStr, expected));
+                        return false;
+                    }
+                    return true;
+                } catch (Exception e) {
+                    world.log("Invalid regex for " + field + ": " + e.getMessage());
+                    return false;
+                }
+            }
+        };
     }
 
     private static String asString(Object value) {

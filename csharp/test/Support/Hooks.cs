@@ -8,6 +8,12 @@ public class Hooks
 {
     private readonly PropsWorld _world;
 
+    static Hooks()
+    {
+        MatchingUtils.ClearFieldMatchers();
+        MatchingUtils.RegisterFieldMatcher(MatchingUtils.CreateRegexFieldMatcher());
+    }
+
     public Hooks(PropsWorld world)
     {
         _world = world;
@@ -104,6 +110,30 @@ public class Hooks
             ["deleted"] = false,
             ["label"] = "hello",
             ["nested"] = new Dictionary<string, object?> { ["score"] = 100, ["enabled"] = true }
+        });
+
+        var contactRecord = new Dictionary<string, object?>
+        {
+            ["id"] = "1",
+            ["user"] = new Dictionary<string, object?>
+            {
+                ["email"] = "alice@example.com",
+                ["role"] = "admin"
+            }
+        };
+        _world.Set("contactRecord", contactRecord);
+        _world.Set("contactRecordList", new List<object?>
+        {
+            contactRecord,
+            new Dictionary<string, object?>
+            {
+                ["id"] = "2",
+                ["user"] = new Dictionary<string, object?>
+                {
+                    ["email"] = "bob@example.com",
+                    ["role"] = "user"
+                }
+            }
         });
     }
 

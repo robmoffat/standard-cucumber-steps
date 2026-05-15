@@ -1,11 +1,31 @@
 import { JSONPath } from 'jsonpath-plus';
-import { PropsWorld } from '../world';
 import expect from 'expect';
-import { DataTable } from '@cucumber/cucumber';
 
-export function doesRowMatch(cw: PropsWorld, t: Record<string, string>, data: any): boolean {
+export interface DataTableLike {
+  hashes(): Record<string, string>[];
+}
+import { PropsWorldLike } from '../world/PropsWorldLike';
+import { findFieldMatcher } from './fieldMatchers';
+
+export { registerFieldMatcher, clearFieldMatchers, pathForFieldSuffix, valueAtPath } from './fieldMatchers';
+export type { RowFieldMatcher } from './fieldMatchers';
+
+export function doesRowMatch(cw: PropsWorldLike, t: Record<string, string>, data: unknown): boolean {
   for (const [field, actual] of Object.entries(t)) {
-    const found = JSONPath({ path: field, json: data })[0];
+    const matcher = findFieldMatcher(field);
+    if (matcher) {
+      const ok = matcher.matchField(cw, field, actual, data);
+      if (ok instanceof Promise) {
+        throw new Error('Async field matchers are not supported in synchronous step handlers');
+      }
+      if (!ok) {
+        return false;
+      }
+      continue;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const found = JSONPath({ path: field, json: data as any })[0];
     const resolved = handleResolve(actual, cw);
 
     if (found != resolved) {
@@ -13,7 +33,7 @@ export function doesRowMatch(cw: PropsWorld, t: Record<string, string>, data: an
         cw.log(
           `Comparing Validation failed: ${JSON.stringify(data, null, 2)} \n Match failed on ${field} '${found}' vs '${resolved}'`
         );
-      } catch (e) {
+      } catch {
         cw.log('Match failed on ' + field + " '" + found + "' vs '" + resolved + "'");
       }
       return false;
@@ -23,13 +43,12 @@ export function doesRowMatch(cw: PropsWorld, t: Record<string, string>, data: an
   return true;
 }
 
-export function indexOf(cw: PropsWorld, rows: Record<string, string>[], data: any): number {
-  for (var i = 0; i < rows.length; i++) {
+export function indexOf(cw: PropsWorldLike, rows: Record<string, string>[], data: unknown): number {
+  for (let i = 0; i < rows.length; i++) {
     if (doesRowMatch(cw, rows[i], data)) {
       return i;
     }
   }
-
   return -1;
 }
 
@@ -37,7 +56,8 @@ function isNumeric(n: string) {
   return !isNaN(parseFloat(n)) && isFinite(n as unknown as number);
 }
 
-export function handleResolve(name: string, on: PropsWorld): any {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function handleResolve(name: string, on: PropsWorldLike): any {
   if (name.startsWith('{') && name.endsWith('}')) {
     const stripped = name.substring(1, name.length - 1);
     if (stripped == 'null') {
@@ -57,30 +77,29 @@ export function handleResolve(name: string, on: PropsWorld): any {
   }
 }
 
-export function matchData(cw: PropsWorld, actual: any[], dt: DataTable) {
+export function matchData(cw: PropsWorldLike, actual: unknown[], dt: DataTableLike) {
   const tableData = dt.hashes();
   const rowCount = tableData.length;
 
-  var resultCopy = JSON.parse(JSON.stringify(actual)) as any[];
+  let resultCopy = JSON.parse(JSON.stringify(actual)) as unknown[];
   cw.log(`result ${JSON.stringify(resultCopy, null, 2)} length ${resultCopy.length}`);
   expect(resultCopy).toHaveLength(rowCount);
-  var row = 0;
+  let row = 0;
 
   resultCopy = resultCopy.filter(rr => {
     const matchingRow = tableData[row];
     row++;
     if (doesRowMatch(cw, matchingRow, rr)) {
       return false;
-    } else {
-      cw.log(`Couldn't match row: ${JSON.stringify(rr, null, 2)}`);
-      return true;
     }
+    cw.log(`Couldn't match row: ${JSON.stringify(rr, null, 2)}`);
+    return true;
   });
 
   expect(resultCopy).toHaveLength(0);
 }
 
-export function matchDataAtLeast(cw: PropsWorld, actual: any[], dt: DataTable) {
+export function matchDataAtLeast(cw: PropsWorldLike, actual: unknown[], dt: DataTableLike) {
   const tableData = dt.hashes();
 
   for (const expectedRow of tableData) {
@@ -92,7 +111,7 @@ export function matchDataAtLeast(cw: PropsWorld, actual: any[], dt: DataTable) {
   }
 }
 
-export function matchDataDoesntContain(cw: PropsWorld, actual: any[], dt: DataTable) {
+export function matchDataDoesntContain(cw: PropsWorldLike, actual: unknown[], dt: DataTableLike) {
   const tableData = dt.hashes();
 
   for (const unwantedRow of tableData) {

@@ -1,12 +1,16 @@
 import { Before, setWorldConstructor } from '@cucumber/cucumber';
 import { PropsWorld } from '../world';
 import { setupGenericSteps } from '../steps/generic.steps';
+import { clearFieldMatchers } from './matching';
+import { registerRegexFieldMatcher } from './testFieldMatchers';
 
 setWorldConstructor(PropsWorld);
 setupGenericSteps();
 
 // Setup test fixtures before each scenario
 Before(function (this: PropsWorld) {
+    clearFieldMatchers();
+    registerRegexFieldMatcher();
     // Sample arrays for array assertion tests
     this.props['sampleArray'] = [
         { name: 'Alice', value: 100 },
@@ -79,4 +83,13 @@ Before(function (this: PropsWorld) {
         label: 'hello',
         nested: { score: 100, enabled: true }
     };
+
+    this.props['contactRecord'] = {
+        id: '1',
+        user: { email: 'alice@example.com', role: 'admin' },
+    };
+    this.props['contactRecordList'] = [
+        this.props['contactRecord'],
+        { id: '2', user: { email: 'bob@example.com', role: 'user' } },
+    ];
 });

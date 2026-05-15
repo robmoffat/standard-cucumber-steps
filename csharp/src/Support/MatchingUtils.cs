@@ -8,6 +8,60 @@ namespace StandardCucumberSteps.Support;
 
 public static class MatchingUtils
 {
+    private static readonly List<IRowFieldMatcher> FieldMatchers = new();
+    private const string RegexSuffix = "_regex";
+
+    public static void RegisterFieldMatcher(IRowFieldMatcher matcher) => FieldMatchers.Add(matcher);
+
+    public static void ClearFieldMatchers() => FieldMatchers.Clear();
+
+    public static string? PathForFieldSuffix(string field, string suffix)
+    {
+        if (!field.EndsWith(suffix))
+            return null;
+        if (field.Length == suffix.Length)
+            return "";
+        var stem = field[..^suffix.Length];
+        if (stem.EndsWith('.'))
+            stem = stem[..^1];
+        return stem;
+    }
+
+    private static IRowFieldMatcher? FindFieldMatcher(string field) =>
+        FieldMatchers.FirstOrDefault(m => m.MatchesField(field));
+
+    public static IRowFieldMatcher CreateRegexFieldMatcher() => new RegexFieldMatcher();
+
+    private sealed class RegexFieldMatcher : IRowFieldMatcher
+    {
+        public bool MatchesField(string field) => field.EndsWith(RegexSuffix);
+
+        public bool MatchField(PropsWorld world, string field, string expected, object? rowData)
+        {
+            var path = PathForFieldSuffix(field, RegexSuffix);
+            if (path == null)
+                return false;
+            var json = JsonConvert.SerializeObject(rowData);
+            var token = JToken.Parse(json);
+            var found = string.IsNullOrEmpty(path) ? token : token.SelectToken("$." + path);
+            var foundStr = found?.ToString() ?? "";
+            try
+            {
+                if (!System.Text.RegularExpressions.Regex.IsMatch(foundStr, expected))
+                {
+                    world.Log($"Regex match failed on {field}: '{foundStr}' vs /{expected}/");
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception e)
+            {
+                world.Log($"Invalid regex for {field}: {e.Message}");
+                return false;
+            }
+        }
+    }
+
     /// <summary>
     /// Resolve a field reference: {null}, {true}, {false}, {number}, {varPath} or literal string.
     /// </summary>
@@ -85,6 +139,14 @@ public static class MatchingUtils
 
         foreach (var (field, expected) in row)
         {
+            var matcher = FindFieldMatcher(field);
+            if (matcher != null)
+            {
+                if (!matcher.MatchField(world, field, expected, data))
+                    return false;
+                continue;
+            }
+
             var found = token.SelectToken("$." + field);
             var foundStr = found?.ToString();
             var resolvedExpected = HandleResolve(expected, world);

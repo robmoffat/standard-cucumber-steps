@@ -252,8 +252,11 @@ func (pw *PropsWorld) doesRowMatch(expected map[string]string, actual interface{
 	debugInfo = append(debugInfo, fmt.Sprintf("Actual object: %s", string(actualBytes)))
 
 	for field, expectedVal := range expected {
-		if strings.HasSuffix(field, "matches_type") {
-			debugInfo = append(debugInfo, fmt.Sprintf("  %s: SKIPPED (schema validation)", field))
+		if matcher := findFieldMatcher(field); matcher != nil {
+			if !matcher.MatchField(pw, field, expectedVal, actual) {
+				debugInfo = append(debugInfo, fmt.Sprintf("  %s: custom matcher failed", field))
+				return false, strings.Join(debugInfo, "\n")
+			}
 			continue
 		}
 
@@ -601,25 +604,16 @@ func (pw *PropsWorld) fieldIsArrayOfStringsWithValues(field string, table *godog
 
 func (pw *PropsWorld) fieldIsObjectWithContents(field string, table *godog.Table) error {
 	actual := pw.HandleResolve(field)
-	if len(table.Rows) != 2 {
-		return fmt.Errorf("expected exactly one data row in table")
+	if len(table.Rows) < 2 {
+		return fmt.Errorf("expected header and data rows in table")
 	}
 	expected := make(map[string]string)
 	for i, cell := range table.Rows[0].Cells {
 		expected[cell.Value] = table.Rows[1].Cells[i].Value
 	}
-	actualMap, ok := actual.(map[string]interface{})
-	if !ok {
-		return fmt.Errorf("field %s is not an object/map", field)
-	}
-	for key, expectedVal := range expected {
-		actualVal, exists := actualMap[key]
-		if !exists {
-			return fmt.Errorf("field %s missing in actual object", key)
-		}
-		if fmt.Sprintf("%v", actualVal) != expectedVal {
-			return fmt.Errorf("field %s mismatch: expected %s, got %v", key, expectedVal, actualVal)
-		}
+	matches, debug := pw.doesRowMatch(expected, actual)
+	if !matches {
+		return fmt.Errorf("object does not match expected contents:\n%s", debug)
 	}
 	return nil
 }
