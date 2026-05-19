@@ -6,7 +6,12 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc && cp ../README.md ./README.md",
-    "test": "c8 cucumber-js"
+    "test": "npm run test:cucumber:cover && npm run test:quickpickle:cover && npm run coverage:report",
+    "test:cucumber": "c8 cucumber-js",
+    "test:quickpickle": "vitest run",
+    "test:cucumber:cover": "c8 -r none cucumber-js",
+    "test:quickpickle:cover": "c8 --clean=false -r none vitest run",
+    "coverage:report": "c8 report"
   },
   "c8": {
     "include": [
@@ -22,16 +27,18 @@
     "all": true
   },
   "dependencies": {
-    "@cucumber/cucumber": "^10.0.0",
     "expect": "^29.0.0",
     "jsonpath-plus": "^10.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "c8": "^9.0.0",
+    "quickpickle": "^1.11.2",
+    "@cucumber/cucumber": "^10.3.1",
     "ts-node": "^10.0.0",
     "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0"
   },
   "files": [
     "dist/**/*"

@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 
 import io.github.robmoffat.steps.GenericSteps.FourArgFunction;
 import io.github.robmoffat.steps.GenericSteps.ThreeArgFunction;
+import io.github.robmoffat.support.MatchingUtils;
 import io.github.robmoffat.world.PropsWorld;
 
 import io.cucumber.java.Before;
@@ -21,6 +22,11 @@ import io.cucumber.java.Scenario;
  * Test-only hooks and fixtures. Not part of the published library.
  */
 public class TestHooks {
+
+    static {
+        MatchingUtils.clearFieldMatchers();
+        MatchingUtils.registerFieldMatcher(MatchingUtils.createRegexFieldMatcher());
+    }
 
     private final PropsWorld world;
 
@@ -96,6 +102,22 @@ public class TestHooks {
         typedValues.put("label", "hello");
         typedValues.put("nested", Map.of("score", 100, "enabled", true));
         world.set("typedValues", typedValues);
+
+        Map<String, Object> contactUser = new HashMap<>();
+        contactUser.put("email", "alice@example.com");
+        contactUser.put("role", "admin");
+        Map<String, Object> contactRecord = new HashMap<>();
+        contactRecord.put("id", "1");
+        contactRecord.put("user", contactUser);
+        world.set("contactRecord", contactRecord);
+
+        Map<String, Object> contactUser2 = new HashMap<>();
+        contactUser2.put("email", "bob@example.com");
+        contactUser2.put("role", "user");
+        Map<String, Object> contactRecord2 = new HashMap<>();
+        contactRecord2.put("id", "2");
+        contactRecord2.put("user", contactUser2);
+        world.set("contactRecordList", Arrays.asList(contactRecord, contactRecord2));
 
         // Java-specific fixtures for java-specific.feature
         world.set("nativeIntArray", new int[] { 10, 20, 30 });

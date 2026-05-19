@@ -126,13 +126,40 @@ func setupTestFixtures(world *generic.PropsWorld) {
 			"enabled": true,
 		},
 	}
+
+	contactRecord := map[string]interface{}{
+		"id": "1",
+		"user": map[string]interface{}{
+			"email": "alice@example.com",
+			"role":  "admin",
+		},
+	}
+	world.Props["contactRecord"] = contactRecord
+	world.Props["contactRecordList"] = []interface{}{
+		contactRecord,
+		map[string]interface{}{
+			"id": "2",
+			"user": map[string]interface{}{
+				"email": "bob@example.com",
+				"role":  "user",
+			},
+		},
+	}
+}
+
+func init() {
+	generic.ClearFieldMatchers()
+	generic.RegisterRegexFieldMatcher()
 }
 
 func TestFeatures(t *testing.T) {
 	suite := godog.TestSuite{
 		Name: "standard-cucumber-steps",
 		ScenarioInitializer: func(ctx *godog.ScenarioContext) {
+			generic.ClearFieldMatchers()
+			generic.RegisterRegexFieldMatcher()
 			world := generic.NewPropsWorld()
+			world.T = t
 			setupTestFixtures(world)
 			world.RegisterSteps(ctx)
 		},
