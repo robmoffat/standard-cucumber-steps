@@ -1,4 +1,4 @@
-export { PropsWorld, PropsWorldLike } from './world';
+export type { PropsWorldLike } from './world/PropsWorldLike';
 export { setupGenericSteps } from './steps/generic.steps';
 export {
   handleResolve,
@@ -13,3 +13,5 @@ export {
   valueAtPath,
 } from './support/matching';
 export type { RowFieldMatcher, DataTableLike } from './support/matching';
+
+export { cucumberWrapStep, quickpickleWrapStep } from './support/stepWrappers';

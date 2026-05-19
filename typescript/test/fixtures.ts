@@ -1,7 +1,7 @@
-import { PropsWorld } from '../../src/world';
+import type { PropsWorldLike } from '../src/world/PropsWorldLike';
 
 /** Per-scenario props used by the shared feature files under ../features. */
-export function registerScenarioFixtures(world: PropsWorld): void {
+export function registerScenarioFixtures(world: PropsWorldLike): void {
   world.props['sampleArray'] = [
     { name: 'Alice', value: 100 },
     { name: 'Bob', value: 200 },

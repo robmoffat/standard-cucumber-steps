@@ -71,16 +71,71 @@ See the [tutorial](docs/tutorial.md) for a full walkthrough.
 
 ### TypeScript
 
+#### Cucumber-js
+
+Install SCS and the runner you use (each runner ships its own `Given` / `When` / `Then`; you must pass **that** module into `setupGenericSteps`).
+
 ```bash
 npm install @robmoffat/standard-cucumber-steps
+npm install @cucumber/cucumber
 ```
+
+Point `cucumber-js` at a support file that registers steps once at load time.
 
 ```typescript
-import { setupGenericSteps, PropsWorld } from '@robmoffat/standard-cucumber-steps';
+// mysteps.steps.ts
+import { Before, Given, Then, When, World, setWorldConstructor } from '@cucumber/cucumber';
+import {
+  setupGenericSteps,
+  cucumberWrapStep,
+  type PropsWorldLike,
+} from '@robmoffat/standard-cucumber-steps';
 
-setWorldConstructor(PropsWorld);
-setupGenericSteps();
+export class MyWorld extends World implements PropsWorldLike {
+  props: Record<string, unknown> = {};
+}
+
+setWorldConstructor(MyWorld);
+
+// this registers the generic steps with cucumber
+setupGenericSteps({ Given, When, Then, wrapStep: cucumberWrapStep });
+
+// your app-specific steps go here
+Before(function (this: MyWorld) ...
 ```
+
+#### QuickPickle (Vitest)
+
+- npm install `quickpickle` and `vitest`. 
+- Add the [quickpickle plugin](https://github.com/dnotes/quickpickle) to `vitest.config.ts`
+- include your `.feature` files in `test.include`, and load your step file via `test.setupFiles`
+
+Write a steps file in the following way to add the generic steps:
+
+```typescript
+// my quickpickle steps
+import { Before, Given, Then, When, QuickPickleWorld, setWorldConstructor } from 'quickpickle';
+import {
+  setupGenericSteps,
+  quickpickleWrapStep,
+  type PropsWorldLike,
+} from '@robmoffat/standard-cucumber-steps';
+
+export class MyWorld extends QuickPickleWorld implements PropsWorldLike {
+  props: Record<string, unknown> = {};
+
+  log(message: string): void {
+    console.log(message);
+  }
+}
+
+setWorldConstructor(MyWorld);
+
+setupGenericSteps({ Given, When, Then, wrapStep: quickpickleWrapStep });
+
+Before(async (world: MyWorld) => {
+  // Optional: same hooks as above
+});
 
 ### Java (Maven)
 
