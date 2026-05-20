@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "@cucumber/cucumber": "^10.0.0",
-    "@robmoffat/standard-cucumber-steps": "file:../../typescript/robmoffat-standard-cucumber-steps-1.0.0.tgz"
+    "@robmoffat/standard-cucumber-steps": "1.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
