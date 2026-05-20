@@ -83,6 +83,37 @@ Feature: Async operations
     When I start "{fourArgFn}" using arguments "P", "Q", "R", and "S" as "fourArgJob"
     And I wait for job "fourArgJob"
     Then "{result}" is "PQRS"
+  # Method calls as background jobs
+
+  Scenario: Start method call as background job with no arguments
+    Given I set "calculator" to "{testCalculator}"
+    When I call "{calculator}" with "GetValue" as "getValueJob"
+    And I wait for job "getValueJob"
+    Then "{result}" is "42"
+
+  Scenario: Start method call as background job with one argument
+    Given I set "calculator" to "{testCalculator}"
+    When I call "{calculator}" with "Add" using argument "{10}" as "addJob"
+    And I wait for job "addJob"
+    Then "{result}" is "52"
+
+  Scenario: Start method call as background job with two arguments
+    Given I set "calculator" to "{testCalculator}"
+    When I call "{calculator}" with "Multiply" using arguments "{3}" and "{4}" as "multiplyJob"
+    And I wait for job "multiplyJob"
+    Then "{result}" is "12"
+
+  Scenario: Start method call as background job with three arguments
+    Given I set "calculator" to "{testCalculator}"
+    When I call "{calculator}" with "Sum3" using arguments "{1}", "{2}", and "{3}" as "sum3Job"
+    And I wait for job "sum3Job"
+    Then "{result}" is "6"
+
+  Scenario: Start method call as background job with four arguments
+    Given I set "calculator" to "{testCalculator}"
+    When I call "{calculator}" with "Sum4" using arguments "{1}", "{2}", "{3}", and "{4}" as "sum4Job"
+    And I wait for job "sum4Job"
+    Then "{result}" is "10"
   # Wait for a period
 
   Scenario: Wait for a period does not advance counter

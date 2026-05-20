@@ -1,5 +1,5 @@
 export type { PropsWorldLike } from './world/PropsWorldLike';
-export { setupGenericSteps } from './steps/generic.steps';
+export { setupGenericSteps, getJobsMap } from './steps/generic.steps';
 export {
   handleResolve,
   doesRowMatch,

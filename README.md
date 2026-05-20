@@ -262,6 +262,11 @@ Any `{...}` reference containing a dot or bracket is resolved as a path into the
 | `When I call "{obj}" with "{method}" using arguments "{p1}" and "{p2}"` | Call method with two arguments |
 | `When I call "{obj}" with "{method}" using arguments "{p1}", "{p2}", and "{p3}"` | Call method with three arguments |
 | `When I call "{obj}" with "{method}" using arguments "{p1}", "{p2}", "{p3}", and "{p4}"` | Call method with four arguments |
+| `When I call "{obj}" with "{method}" as "jobName"` | Start method call as background job |
+| `When I call "{obj}" with "{method}" using argument "{p1}" as "jobName"` | Start method job with one arg |
+| `When I call "{obj}" with "{method}" using arguments "{p1}" and "{p2}" as "jobName"` | Start method job with two args |
+| `When I call "{obj}" with "{method}" using arguments "{p1}", "{p2}", and "{p3}" as "jobName"` | Start method job with three args |
+| `When I call "{obj}" with "{method}" using arguments "{p1}", "{p2}", "{p3}", and "{p4}" as "jobName"` | Start method job with four args |
 
 ### [Async Steps](docs/async.md)
 

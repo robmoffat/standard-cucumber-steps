@@ -104,6 +104,56 @@ public class GenericSteps
         }
     }
 
+    [When("I call {string} with {string} as {string}")]
+    public void StartMethodJob(string field, string methodName, string jobName)
+    {
+        StartMethodJobWithArgs(field, methodName, jobName);
+    }
+
+    [When("I call {string} with {string} using argument {string} as {string}")]
+    public void StartMethodJobWithParameter(string field, string methodName, string param, string jobName)
+    {
+        var p = MatchingUtils.HandleResolve(param, _world);
+        StartMethodJobWithArgs(field, methodName, jobName, p);
+    }
+
+    [When("I call {string} with {string} using arguments {string} and {string} as {string}")]
+    public void StartMethodJobWithTwoParameters(string field, string methodName, string param1, string param2, string jobName)
+    {
+        StartMethodJobWithArgs(field, methodName, jobName,
+            MatchingUtils.HandleResolve(param1, _world),
+            MatchingUtils.HandleResolve(param2, _world));
+    }
+
+    [When("I call {string} with {string} using arguments {string}, {string}, and {string} as {string}")]
+    public void StartMethodJobWithThreeParameters(string field, string methodName, string param1, string param2, string param3, string jobName)
+    {
+        StartMethodJobWithArgs(field, methodName, jobName,
+            MatchingUtils.HandleResolve(param1, _world),
+            MatchingUtils.HandleResolve(param2, _world),
+            MatchingUtils.HandleResolve(param3, _world));
+    }
+
+    [When("I call {string} with {string} using arguments {string}, {string}, {string}, and {string} as {string}")]
+    public void StartMethodJobWithFourParameters(string field, string methodName, string param1, string param2, string param3, string param4, string jobName)
+    {
+        StartMethodJobWithArgs(field, methodName, jobName,
+            MatchingUtils.HandleResolve(param1, _world),
+            MatchingUtils.HandleResolve(param2, _world),
+            MatchingUtils.HandleResolve(param3, _world),
+            MatchingUtils.HandleResolve(param4, _world));
+    }
+
+    private void StartMethodJobWithArgs(string field, string methodName, string jobName, params object?[] args)
+    {
+        var task = Task.Run(async () =>
+        {
+            var obj = MatchingUtils.HandleResolve(field, _world);
+            return await InvokeMethod(obj!, methodName, args);
+        });
+        _world.Tasks[jobName] = task;
+    }
+
     // ========== Direct Function Call Steps ==========
 
     [When("I call {string}")]

@@ -115,6 +115,46 @@ public class GenericSteps {
         }
     }
 
+    @When("I call {string} with {string} as {string}")
+    public void startMethodJob(String field, String fnName, String jobName) {
+        startMethodJobWithArgs(field, fnName, jobName);
+    }
+
+    @When("I call {string} with {string} using argument {string} as {string}")
+    public void startMethodJobWithArgument(String field, String fnName, String param, String jobName) {
+        startMethodJobWithArgs(field, fnName, jobName, handleResolve(param, world));
+    }
+
+    @When("I call {string} with {string} using arguments {string} and {string} as {string}")
+    public void startMethodJobWithTwoArguments(String field, String fnName, String param1, String param2, String jobName) {
+        startMethodJobWithArgs(field, fnName, jobName, handleResolve(param1, world), handleResolve(param2, world));
+    }
+
+    @When("I call {string} with {string} using arguments {string}, {string}, and {string} as {string}")
+    public void startMethodJobWithThreeArguments(String field, String fnName, String param1, String param2, String param3, String jobName) {
+        startMethodJobWithArgs(field, fnName, jobName,
+                handleResolve(param1, world), handleResolve(param2, world), handleResolve(param3, world));
+    }
+
+    @When("I call {string} with {string} using arguments {string}, {string}, {string}, and {string} as {string}")
+    public void startMethodJobWithFourArguments(String field, String fnName, String param1, String param2, String param3, String param4, String jobName) {
+        startMethodJobWithArgs(field, fnName, jobName,
+                handleResolve(param1, world), handleResolve(param2, world),
+                handleResolve(param3, world), handleResolve(param4, world));
+    }
+
+    private void startMethodJobWithArgs(String field, String fnName, String jobName, Object... args) {
+        CompletableFuture<Object> future = CompletableFuture.supplyAsync(() -> {
+            try {
+                Object object = handleResolve(field, world);
+                return invokeMethod(object, fnName, args);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+        jobs.put(jobName, future);
+    }
+
     // ========== Direct Function Call Steps ==========
 
     @When("I call {string}")

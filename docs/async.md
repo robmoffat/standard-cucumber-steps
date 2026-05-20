@@ -104,6 +104,20 @@ Then "{count}" is "1"
 
 ---
 
+## Method calls as background jobs
+
+Same job/wait pattern for `I call "{obj}" with "{method}"` — the method return value is stored in `result` when the job completes.
+
+```gherkin
+When I call "{calculator}" with "GetValue" as "getValueJob"
+And I wait for job "getValueJob"
+Then "{result}" is "42"
+```
+
+Variants with one to four arguments mirror the synchronous method-call steps, with `as "jobName"` at the end.
+
+---
+
 ## `I wait for job "jobName"` — wait for a named job (30s timeout)
 
 Waits for the previously started job to finish. Stores the result in both `result` and `jobName`.
