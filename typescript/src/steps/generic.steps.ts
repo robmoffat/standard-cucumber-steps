@@ -20,6 +20,31 @@ export interface StepRegistrarBindings {
   wrapStep: (fn: (world: PropsWorldLike, ...args: any[]) => any) => (this: unknown, ...args: any[]) => any;
 }
 
+export function getJobsMap(world: PropsWorldLike): Map<string, Promise<unknown>> {
+  const jobs: Map<string, Promise<unknown>> = world.props['_jobs'] ?? new Map();
+  world.props['_jobs'] = jobs;
+  return jobs;
+}
+
+function startMethodJob(
+  world: PropsWorldLike,
+  jobName: string,
+  field: string,
+  fnName: string,
+  params: string[] = []
+) {
+  const jobs = getJobsMap(world);
+  jobs.set(
+    jobName,
+    Promise.resolve().then(async () => {
+      const object = handleResolve(field, world);
+      const fn = object[fnName];
+      const resolved = params.map(p => handleResolve(p, world));
+      return fn.call(object, ...resolved);
+    })
+  );
+}
+
 /** Registers generic steps with the consumer's Given/When/Then (pass the same module instance your runner uses). */
 export function setupGenericSteps(bindings: StepRegistrarBindings) {
   const { Given, When, Then, wrapStep } = bindings;
@@ -113,6 +138,64 @@ export function setupGenericSteps(bindings: StepRegistrarBindings) {
         } catch (error) {
           world.props['result'] = error;
         }
+      }
+    )
+  );
+
+  When(
+    'I call {string} with {string} as {string}',
+    wrapStep((world: PropsWorldLike, field: string, fnName: string, jobName: string) => {
+      startMethodJob(world, jobName, field, fnName);
+    })
+  );
+
+  When(
+    'I call {string} with {string} using argument {string} as {string}',
+    wrapStep((world: PropsWorldLike, field: string, fnName: string, param: string, jobName: string) => {
+      startMethodJob(world, jobName, field, fnName, [param]);
+    })
+  );
+
+  When(
+    'I call {string} with {string} using arguments {string} and {string} as {string}',
+    wrapStep(
+      (world: PropsWorldLike, field: string, fnName: string, param1: string, param2: string, jobName: string) => {
+        startMethodJob(world, jobName, field, fnName, [param1, param2]);
+      }
+    )
+  );
+
+  When(
+    'I call {string} with {string} using arguments {string}, {string}, and {string} as {string}',
+    wrapStep(
+      (
+        world: PropsWorldLike,
+        field: string,
+        fnName: string,
+        param1: string,
+        param2: string,
+        param3: string,
+        jobName: string
+      ) => {
+        startMethodJob(world, jobName, field, fnName, [param1, param2, param3]);
+      }
+    )
+  );
+
+  When(
+    'I call {string} with {string} using arguments {string}, {string}, {string}, and {string} as {string}',
+    wrapStep(
+      (
+        world: PropsWorldLike,
+        field: string,
+        fnName: string,
+        param1: string,
+        param2: string,
+        param3: string,
+        param4: string,
+        jobName: string
+      ) => {
+        startMethodJob(world, jobName, field, fnName, [param1, param2, param3, param4]);
       }
     )
   );
@@ -430,6 +513,7 @@ export function setupGenericSteps(bindings: StepRegistrarBindings) {
     wrapStep(async (world: PropsWorldLike, jobName: string) => {
       const jobs: Map<string, Promise<any>> = world.props['_jobs'] ?? new Map();
       try {
+        const resolvedName = handleResolve(jobName, world);
         const result = await jobs.get(jobName);
         world.props['result'] = result;
         world.props[jobName] = result;

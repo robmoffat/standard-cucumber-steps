@@ -96,6 +96,8 @@ And I refer to "{count}" as "totalCalls"
 Then "{totalCalls}" is "3"
 ```
 
+For method calls as background jobs (return value in `result` after `I wait for job`), see [Async Steps](async.md).
+
 ---
 
 ## Full example

@@ -488,6 +488,57 @@ func (pw *PropsWorld) iCallObjectWithMethodWithFourParameters(field, fnName, par
 	return nil
 }
 
+func (pw *PropsWorld) invokeMethodResult(field, fnName string, paramStrings ...string) (interface{}, error) {
+	obj := pw.HandleResolve(field)
+	objValue := reflect.ValueOf(obj)
+	method := objValue.MethodByName(fnName)
+	if !method.IsValid() {
+		return nil, fmt.Errorf("method %s not found", fnName)
+	}
+	args := make([]interface{}, len(paramStrings))
+	for i, p := range paramStrings {
+		args[i] = pw.HandleResolve(p)
+	}
+	reflectArgs := convertArgs(method, args)
+	results := method.Call(reflectArgs)
+	if len(results) > 1 {
+		if err, ok := results[len(results)-1].Interface().(error); ok && err != nil {
+			return nil, err
+		}
+	}
+	if len(results) > 0 {
+		return results[0].Interface(), nil
+	}
+	return nil, nil
+}
+
+func (pw *PropsWorld) iStartMethodJob(field, fnName, jobName string, paramStrings ...string) error {
+	pw.AsyncManager.StartTask(jobName, func(ctx context.Context) (interface{}, error) {
+		return pw.invokeMethodResult(field, fnName, paramStrings...)
+	})
+	return nil
+}
+
+func (pw *PropsWorld) iStartMethodJobNoParams(field, fnName, jobName string) error {
+	return pw.iStartMethodJob(field, fnName, jobName)
+}
+
+func (pw *PropsWorld) iStartMethodJobWithParameter(field, fnName, param, jobName string) error {
+	return pw.iStartMethodJob(field, fnName, jobName, param)
+}
+
+func (pw *PropsWorld) iStartMethodJobWithTwoParameters(field, fnName, param1, param2, jobName string) error {
+	return pw.iStartMethodJob(field, fnName, jobName, param1, param2)
+}
+
+func (pw *PropsWorld) iStartMethodJobWithThreeParameters(field, fnName, param1, param2, param3, jobName string) error {
+	return pw.iStartMethodJob(field, fnName, jobName, param1, param2, param3)
+}
+
+func (pw *PropsWorld) iStartMethodJobWithFourParameters(field, fnName, param1, param2, param3, param4, jobName string) error {
+	return pw.iStartMethodJob(field, fnName, jobName, param1, param2, param3, param4)
+}
+
 func (pw *PropsWorld) iCallFunctionWithParameter(fnName, param string) error {
 	pw.callFunction(pw.HandleResolve(fnName), pw.HandleResolve(param))
 	return nil
@@ -1089,6 +1140,11 @@ func (pw *PropsWorld) RegisterSteps(s *godog.ScenarioContext) {
 	s.Step(`^I call "([^"]*)" with "([^"]*)" using arguments "([^"]*)" and "([^"]*)"$`, pw.iCallObjectWithMethodWithTwoParameters)
 	s.Step(`^I call "([^"]*)" with "([^"]*)" using arguments "([^"]*)", "([^"]*)", and "([^"]*)"$`, pw.iCallObjectWithMethodWithThreeParameters)
 	s.Step(`^I call "([^"]*)" with "([^"]*)" using arguments "([^"]*)", "([^"]*)", "([^"]*)", and "([^"]*)"$`, pw.iCallObjectWithMethodWithFourParameters)
+	s.Step(`^I call "([^"]*)" with "([^"]*)" as "([^"]*)"$`, pw.iStartMethodJobNoParams)
+	s.Step(`^I call "([^"]*)" with "([^"]*)" using argument "([^"]*)" as "([^"]*)"$`, pw.iStartMethodJobWithParameter)
+	s.Step(`^I call "([^"]*)" with "([^"]*)" using arguments "([^"]*)" and "([^"]*)" as "([^"]*)"$`, pw.iStartMethodJobWithTwoParameters)
+	s.Step(`^I call "([^"]*)" with "([^"]*)" using arguments "([^"]*)", "([^"]*)", and "([^"]*)" as "([^"]*)"$`, pw.iStartMethodJobWithThreeParameters)
+	s.Step(`^I call "([^"]*)" with "([^"]*)" using arguments "([^"]*)", "([^"]*)", "([^"]*)", and "([^"]*)" as "([^"]*)"$`, pw.iStartMethodJobWithFourParameters)
 
 	// Variable management
 	s.Step(`^I refer to "([^"]*)" as "([^"]*)"$`, pw.IReferToAs)
