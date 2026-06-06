@@ -82,8 +82,17 @@ Then "{user}" is an object with the following contents
 ## Data table field matching
 
 - Column headers are field names (support dot-notation for nested fields, e.g. `address.city`)
-- Cell values are resolved: `{propName}` looks up a prop; bare strings are literal
-- Matching is string-based after resolution: `"3"` matches a numeric `3`
+- Cell values are resolved: `{propName}` looks up a prop; `{42}` and `{9.99}` are numeric literals; bare strings are literal
+- **Numeric loose equality**: `{1234}` matches integer `1234` and double `1234.0`; `{42}` matches `42.0`. This mirrors JavaScript's `!=` behaviour used by the TypeScript implementation.
+- After numeric comparison, values are compared with direct equality, then string forms
+
+```gherkin
+Then "{record}" is an object with the following contents
+  | integers.first | floats.ratio | floats.whole |
+  | {1234}         | {9.99}       | {42}         |
+```
+
+See `features/numeric-equality.feature` for cross-language conformance scenarios.
 
 ---
 
