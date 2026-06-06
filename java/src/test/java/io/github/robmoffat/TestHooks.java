@@ -103,6 +103,23 @@ public class TestHooks {
         typedValues.put("nested", Map.of("score", 100, "enabled", true));
         world.set("typedValues", typedValues);
 
+        Map<String, Object> integers = new HashMap<>();
+        integers.put("first", 1234);
+        integers.put("second", 2345);
+        Map<String, Object> floats = new HashMap<>();
+        floats.put("ratio", 9.99);
+        floats.put("whole", 42.0);
+        Map<String, Object> numericRecord = new HashMap<>();
+        numericRecord.put("integers", integers);
+        numericRecord.put("floats", floats);
+        numericRecord.put("label", "item-1");
+        world.set("numericRecord", numericRecord);
+
+        world.set("numericArray", Arrays.asList(
+            Map.of("id", 1, "amount", 100),
+            Map.of("id", 2, "amount", 9.99)
+        ));
+
         Map<String, Object> contactUser = new HashMap<>();
         contactUser.put("email", "alice@example.com");
         contactUser.put("role", "admin");
@@ -124,6 +141,44 @@ public class TestHooks {
         world.set("nativeStringArray", new String[] { "alpha", "beta", "gamma" });
         world.set("integerValue", Integer.valueOf(42));
         world.set("doubleValue", Double.valueOf(3.14));
+
+        Map<String, Object> recordWithWirePair = new HashMap<>();
+        recordWithWirePair.put("id", "record-1");
+        recordWithWirePair.put("signature", new WireShapedPair("alpha (header)", "alpha (value)"));
+        recordWithWirePair.put("tags", Map.of("primary", "main"));
+        world.set("recordWithWirePair", recordWithWirePair);
+
+        Map<String, Object> details = new HashMap<>();
+        details.put("id", "record-1");
+        details.put("signature", new WireShapedPair("alpha (header)", "alpha (value)"));
+        details.put("tags", Map.of("primary", "main"));
+        Map<String, Object> compositeRecord = new HashMap<>();
+        compositeRecord.put("category", "widget");
+        compositeRecord.put("title", "Example");
+        compositeRecord.put("details", details);
+        world.set("compositeRecord", compositeRecord);
+    }
+
+    /**
+     * Generic Java bean with {@code protected}/{@code signature} keys — exercises
+     * loose equality for nested wire-shaped objects (same pattern as detached JWS fields).
+     */
+    public static class WireShapedPair {
+        private final String protectedHeader;
+        private final String signature;
+
+        public WireShapedPair(String protectedHeader, String signature) {
+            this.protectedHeader = protectedHeader;
+            this.signature = signature;
+        }
+
+        public String getProtected() {
+            return protectedHeader;
+        }
+
+        public String getSignature() {
+            return signature;
+        }
     }
 
     public static class TestCalculator {

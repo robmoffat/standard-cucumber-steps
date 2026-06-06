@@ -14,6 +14,10 @@ Feature: Java-specific tests
   # nativeStringArray - String[] { "alpha", "beta", "gamma" }
   # integerValue - Integer object (42)
   # doubleValue - Double object (3.14)
+  #
+  # recordWithCounters - nested numeric fields for loose-equality tests
+  # recordWithWirePair - bean with protected/signature wire-shaped pair
+  # compositeRecord - nested composite object with wire-shaped pair in details
   # ========== Method Overloading Resolution (isMoreSpecific) ==========
 
   Scenario: Call overloaded method - Integer picks more specific than Number
@@ -84,3 +88,18 @@ Feature: Java-specific tests
   Scenario: Null array returns empty list
     Given I set "nullArr" to "{null}"
     Then "{nullArr}" is empty
+  # ========== Loose value equality (align with TypeScript matching) ==========
+  # Generic nested objects — not tied to any particular application domain.
+  # Numeric equality scenarios live in ../features/numeric-equality.feature.
+
+  Scenario: Nested bean with wire-shaped pair matches structured columns
+    Given I set "record" to "{recordWithWirePair}"
+    Then "{record}" is an object with the following contents
+      | id       | signature.signature | signature.protected | tags.primary |
+      | record-1 | alpha (value)       | alpha (header)      | main         |
+
+  Scenario: Deeply nested wire-shaped pair on composite object
+    Given I set "record" to "{compositeRecord}"
+    Then "{record}" is an object with the following contents
+      | category | title   | details.id | details.signature.signature | details.signature.protected | details.tags.primary |
+      | widget   | Example | record-1   | alpha (value)               | alpha (header)              | main                 |

@@ -293,7 +293,7 @@ public class GenericSteps
     public void IsAnObjectWithContents(string field, DataTable dt)
     {
         var data = MatchingUtils.HandleResolve(field, _world);
-        var row = dt.CreateSet<Dictionary<string, string>>().First();
+        var row = MatchingUtils.TableToRowMaps(dt).First();
         Assert.That(MatchingUtils.DoesRowMatch(_world, row, data), Is.True);
     }
 
