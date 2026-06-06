@@ -45,7 +45,14 @@ public final class MatchingUtils {
         FIELD_MATCHERS.clear();
     }
 
-    /** Path within row data for a column ending with {@code suffix}, or null if not applicable. */
+    /**
+     * Path within row data for a column ending with {@code suffix}, or {@code null} if not applicable.
+     *
+     * @param field the field name to inspect
+     * @param suffix the suffix to remove
+     * @return the field path without the suffix, an empty string if the suffix consumes the whole field,
+     *         or {@code null} if the field does not end with the suffix
+     */
     public static String pathForFieldSuffix(String field, String suffix) {
         if (!field.endsWith(suffix)) {
             return null;
@@ -102,6 +109,10 @@ public final class MatchingUtils {
 
     /**
      * Resolve a field reference to its actual value.
+     *
+     * @param name the value or placeholder expression
+     * @param world the world used to resolve placeholder expressions
+     * @return the resolved value
      */
     public static Object handleResolve(String name, PropsWorld world) {
         if (name.startsWith("{") && name.endsWith("}")) {
@@ -134,6 +145,11 @@ public final class MatchingUtils {
 
     /**
      * Check if a table row matches the given data object.
+     *
+     * @param world the test world used for resolution and logging
+     * @param row the expected row values
+     * @param data the actual object to inspect
+     * @return {@code true} if the row matches; otherwise {@code false}
      */
     public static boolean doesRowMatch(PropsWorld world, Map<String, String> row, Object data) {
         for (Map.Entry<String, String> entry : row.entrySet()) {
@@ -170,9 +186,9 @@ public final class MatchingUtils {
     }
 
     /**
-     * Built-in matcher for columns whose header ends with {@code _regex}.
+     * Test-only matcher registered from {@code TestHooks}.
      *
-     * @return a field matcher that applies regex matching to those columns
+     * @return a field matcher that applies regex matching to fields ending in {@value #REGEX_SUFFIX}
      */
     public static RowFieldMatcher createRegexFieldMatcher() {
         return new RowFieldMatcher() {
@@ -282,6 +298,11 @@ public final class MatchingUtils {
 
     /**
      * Find the index of a matching row in the list.
+     *
+     * @param world the test world used for resolution and logging
+     * @param rows the expected rows to search
+     * @param data the actual object to compare against
+     * @return the index of the first matching row, or {@code -1} if none match
      */
     public static int indexOf(PropsWorld world, List<Map<String, String>> rows, Object data) {
         for (int i = 0; i < rows.size(); i++) {
@@ -294,6 +315,10 @@ public final class MatchingUtils {
 
     /**
      * Match an array of data against a Cucumber DataTable (exact match).
+     *
+     * @param world the test world used for resolution and logging
+     * @param actual the actual data
+     * @param dt the expected data table
      */
     public static void matchData(PropsWorld world, List<?> actual, DataTable dt) {
         List<Map<String, String>> tableData = dt.asMaps();
@@ -318,6 +343,10 @@ public final class MatchingUtils {
 
     /**
      * Match an array — at least the given rows must be present.
+     *
+     * @param world the test world used for resolution and logging
+     * @param actual the actual data
+     * @param dt the expected data table
      */
     public static void matchDataAtLeast(PropsWorld world, List<?> actual, DataTable dt) {
         List<Map<String, String>> tableData = dt.asMaps();
@@ -338,6 +367,10 @@ public final class MatchingUtils {
 
     /**
      * Assert none of the given rows are present in the array.
+     *
+     * @param world the test world used for resolution and logging
+     * @param actual the actual data
+     * @param dt the rows that must not be present
      */
     public static void matchDataDoesntContain(PropsWorld world, List<?> actual, DataTable dt) {
         List<Map<String, String>> tableData = dt.asMaps();
