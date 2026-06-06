@@ -31,10 +31,16 @@ public final class MatchingUtils {
     private MatchingUtils() {
     }
 
+    /**
+     * Register a custom matcher for Gherkin table columns (e.g. columns ending in {@code _regex}).
+     *
+     * @param matcher the matcher to add
+     */
     public static void registerFieldMatcher(RowFieldMatcher matcher) {
         FIELD_MATCHERS.add(matcher);
     }
 
+    /** Clear all registered field matchers. */
     public static void clearFieldMatchers() {
         FIELD_MATCHERS.clear();
     }

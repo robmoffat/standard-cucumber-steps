@@ -204,7 +204,7 @@ Full documentation with examples for each step group:
 - [Assertions](docs/assertions.md) — equality, contains, numeric comparisons, error assertions
 - [Method Calls](docs/method-calls.md) — calling functions and object methods
 - [Async Steps](docs/async.md) — async functions and background jobs
-- [Array Assertions](docs/array-assertions.md) — matching arrays and objects against data tables
+- [Array Assertions](docs/array-assertions.md) — matching arrays and objects against data tables (including numeric loose equality)
 - [Test Setup](docs/test-setup.md) — invocation counters, async functions, delays
 
 ### [Variables](docs/variables.md)
