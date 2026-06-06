@@ -89,6 +89,17 @@ export function registerScenarioFixtures(world: PropsWorldLike): void {
     nested: { score: 100, enabled: true },
   };
 
+  world.props['numericRecord'] = {
+    integers: { first: 1234, second: 2345 },
+    floats: { ratio: 9.99, whole: 42.0 },
+    label: 'item-1',
+  };
+
+  world.props['numericArray'] = [
+    { id: 1, amount: 100 },
+    { id: 2, amount: 9.99 },
+  ];
+
   world.props['contactRecord'] = {
     id: '1',
     user: { email: 'alice@example.com', role: 'admin' },

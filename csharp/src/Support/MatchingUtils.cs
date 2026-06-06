@@ -32,6 +32,21 @@ public static class MatchingUtils
 
     public static IRowFieldMatcher CreateRegexFieldMatcher() => new RegexFieldMatcher();
 
+    /// <summary>
+    /// Convert a DataTable to row maps using header cells as keys (supports dotted paths like nested.score).
+    /// </summary>
+    public static List<Dictionary<string, string>> TableToRowMaps(DataTable dt)
+    {
+        var headers = dt.Header.ToList();
+        return dt.Rows.Select(row =>
+        {
+            var dict = new Dictionary<string, string>();
+            for (var i = 0; i < headers.Count; i++)
+                dict[headers[i]] = row[i];
+            return dict;
+        }).ToList();
+    }
+
     private sealed class RegexFieldMatcher : IRowFieldMatcher
     {
         public bool MatchesField(string field) => field.EndsWith(RegexSuffix);
@@ -148,17 +163,81 @@ public static class MatchingUtils
             }
 
             var found = token.SelectToken("$." + field);
-            var foundStr = found?.ToString();
             var resolvedExpected = HandleResolve(expected, world);
-            var expectedStr = resolvedExpected?.ToString();
+            var foundValue = JTokenToComparable(found);
 
-            if (foundStr != expectedStr)
+            if (!ValuesEqual(foundValue, resolvedExpected))
             {
-                world.Log($"Match failed on {field}: '{foundStr}' vs '{expectedStr}'");
+                world.Log($"Match failed on {field}: '{foundValue}' vs '{resolvedExpected}'");
                 return false;
             }
         }
         return true;
+    }
+
+    private static object? JTokenToComparable(JToken? token)
+    {
+        if (token == null || token.Type == JTokenType.Null)
+            return null;
+        if (token.Type == JTokenType.Integer || token.Type == JTokenType.Float)
+            return token.Value<double>();
+        if (token.Type == JTokenType.Boolean)
+            return token.Value<bool>();
+        return token.ToObject<object?>();
+    }
+
+    /// <summary>
+    /// Compare values the way TypeScript does ({@code found != resolved}): numeric loose equality,
+    /// then direct equality, then string forms.
+    /// </summary>
+    private static bool ValuesEqual(object? found, object? resolved)
+    {
+        if (found == null && resolved == null)
+            return true;
+        if (found == null || resolved == null)
+            return false;
+
+        if (TryToDouble(found, out var foundNum) && TryToDouble(resolved, out var resolvedNum))
+            return foundNum == resolvedNum;
+
+        if (Equals(found, resolved))
+            return true;
+
+        return string.Equals(Convert.ToString(found), Convert.ToString(resolved), StringComparison.Ordinal);
+    }
+
+    private static bool TryToDouble(object value, out double result)
+    {
+        switch (value)
+        {
+            case double d:
+                result = d;
+                return true;
+            case float f:
+                result = f;
+                return true;
+            case int i:
+                result = i;
+                return true;
+            case long l:
+                result = l;
+                return true;
+            case decimal m:
+                result = (double)m;
+                return true;
+            case short s:
+                result = s;
+                return true;
+            case byte b:
+                result = b;
+                return true;
+            case JValue j when j.Type == JTokenType.Integer || j.Type == JTokenType.Float:
+                result = j.Value<double>();
+                return true;
+            default:
+                result = 0;
+                return false;
+        }
     }
 
     /// <summary>
@@ -166,7 +245,7 @@ public static class MatchingUtils
     /// </summary>
     public static void MatchData(PropsWorld world, IList<object?> actual, DataTable dt)
     {
-        var tableData = dt.CreateSet<Dictionary<string, string>>().ToList();
+        var tableData = TableToRowMaps(dt);
         Assert.That(actual.Count, Is.EqualTo(tableData.Count), "Array length mismatch");
 
         var unmatched = new List<object?>();
@@ -186,7 +265,7 @@ public static class MatchingUtils
     /// </summary>
     public static void MatchDataAtLeast(PropsWorld world, IList<object?> actual, DataTable dt)
     {
-        var tableData = dt.CreateSet<Dictionary<string, string>>().ToList();
+        var tableData = TableToRowMaps(dt);
         foreach (var expectedRow in tableData)
         {
             var found = actual.Any(item => DoesRowMatch(world, expectedRow, item));

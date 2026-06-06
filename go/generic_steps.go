@@ -242,6 +242,53 @@ func (pw *PropsWorld) callFunction(fn interface{}, args ...interface{}) {
 	}
 }
 
+// valuesEqual compares values the way TypeScript does (found != resolved): numeric loose
+// equality, then direct equality, then string forms.
+func valuesEqual(found, resolved interface{}) bool {
+	if found == nil && resolved == nil {
+		return true
+	}
+	if found == nil || resolved == nil {
+		return false
+	}
+
+	if foundNum, foundOk := toFloat64(found); foundOk {
+		if resolvedNum, resolvedOk := toFloat64(resolved); resolvedOk {
+			return foundNum == resolvedNum
+		}
+	}
+
+	if reflect.DeepEqual(found, resolved) {
+		return true
+	}
+
+	return fmt.Sprintf("%v", found) == fmt.Sprintf("%v", resolved)
+}
+
+func toFloat64(value interface{}) (float64, bool) {
+	switch v := value.(type) {
+	case float64:
+		return v, true
+	case float32:
+		return float64(v), true
+	case int:
+		return float64(v), true
+	case int64:
+		return float64(v), true
+	case int32:
+		return float64(v), true
+	case uint:
+		return float64(v), true
+	case uint64:
+		return float64(v), true
+	case json.Number:
+		f, err := v.Float64()
+		return f, err == nil
+	default:
+		return 0, false
+	}
+}
+
 // doesRowMatch checks if a data row matches the expected values
 func (pw *PropsWorld) doesRowMatch(expected map[string]string, actual interface{}) (bool, string) {
 	actualBytes, _ := json.Marshal(actual)
@@ -267,19 +314,9 @@ func (pw *PropsWorld) doesRowMatch(expected map[string]string, actual interface{
 
 		resolvedExpected := pw.HandleResolve(expectedVal)
 
-		if foundVal == true && resolvedExpected == "true" {
-			continue
-		}
-		if foundVal == false && resolvedExpected == "false" {
-			continue
-		}
-
-		foundStr := fmt.Sprintf("%v", foundVal)
-		expectedStr := fmt.Sprintf("%v", resolvedExpected)
-
-		if foundStr != expectedStr {
-			debugInfo = append(debugInfo, fmt.Sprintf("  %s: MISMATCH - found: '%s', expected: '%s'",
-				field, foundStr, expectedStr))
+		if !valuesEqual(foundVal, resolvedExpected) {
+			debugInfo = append(debugInfo, fmt.Sprintf("  %s: MISMATCH - found: '%v', expected: '%v'",
+				field, foundVal, resolvedExpected))
 			return false, strings.Join(debugInfo, "\n")
 		}
 	}

@@ -127,6 +127,23 @@ func setupTestFixtures(world *generic.PropsWorld) {
 		},
 	}
 
+	world.Props["numericRecord"] = map[string]interface{}{
+		"integers": map[string]interface{}{
+			"first":  1234,
+			"second": 2345,
+		},
+		"floats": map[string]interface{}{
+			"ratio": 9.99,
+			"whole": 42.0,
+		},
+		"label": "item-1",
+	}
+
+	world.Props["numericArray"] = []interface{}{
+		map[string]interface{}{"id": 1, "amount": 100},
+		map[string]interface{}{"id": 2, "amount": 9.99},
+	}
+
 	contactRecord := map[string]interface{}{
 		"id": "1",
 		"user": map[string]interface{}{

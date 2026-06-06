@@ -112,6 +112,19 @@ public class Hooks
             ["nested"] = new Dictionary<string, object?> { ["score"] = 100, ["enabled"] = true }
         });
 
+        _world.Set("numericRecord", new Dictionary<string, object?>
+        {
+            ["integers"] = new Dictionary<string, object?> { ["first"] = 1234, ["second"] = 2345 },
+            ["floats"] = new Dictionary<string, object?> { ["ratio"] = 9.99, ["whole"] = 42.0 },
+            ["label"] = "item-1"
+        });
+
+        _world.Set("numericArray", new List<object?>
+        {
+            new Dictionary<string, object?> { ["id"] = 1, ["amount"] = 100 },
+            new Dictionary<string, object?> { ["id"] = 2, ["amount"] = 9.99 }
+        });
+
         var contactRecord = new Dictionary<string, object?>
         {
             ["id"] = "1",

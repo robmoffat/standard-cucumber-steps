@@ -146,7 +146,7 @@ public final class MatchingUtils {
                 Object found = extractFromWorld(data, field);
                 Object resolved = handleResolve(expected, world);
 
-                if (!Objects.equals(asString(found), asString(resolved))) {
+                if (!valuesEqual(found, resolved, field)) {
                     world.log(String.format(
                             "Match failed on %s: '%s' vs '%s'", field, found, resolved));
                     return false;
@@ -193,8 +193,81 @@ public final class MatchingUtils {
         };
     }
 
-    private static String asString(Object value) {
-        return value == null ? null : String.valueOf(value);
+    /**
+     * Compare actual and expected values the way TypeScript does ({@code found != resolved}):
+     * numeric loose equality, then direct equality, then string forms, then wire-shaped nested
+     * objects (e.g. detached signatures with {@code signature}/{@code protected} keys).
+     */
+    private static boolean valuesEqual(Object found, Object resolved, String field) {
+        if (found == null && resolved == null) {
+            return true;
+        }
+        if (found == null || resolved == null) {
+            return false;
+        }
+
+        if (found instanceof Number && resolved instanceof Number) {
+            return ((Number) found).doubleValue() == ((Number) resolved).doubleValue();
+        }
+
+        if (Objects.equals(found, resolved)) {
+            return true;
+        }
+
+        if (Objects.equals(String.valueOf(found), String.valueOf(resolved))) {
+            return true;
+        }
+
+        if (resolved instanceof String) {
+            String extracted = extractComparableString(found, field);
+            if (extracted != null) {
+                return Objects.equals(extracted, resolved);
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * When a table cell expects a string but the data object holds a nested bean/map
+     * (e.g. detached signature), compare against the conventional wire keys.
+     */
+    @SuppressWarnings("unchecked")
+    private static String extractComparableString(Object value, String field) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof String) {
+            return (String) value;
+        }
+
+        Map<String, Object> asMap;
+        if (value instanceof Map) {
+            asMap = (Map<String, Object>) value;
+        } else {
+            try {
+                asMap = objectMapper.convertValue(value, Map.class);
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }
+
+        if (field.endsWith(".signature.protected")) {
+            Object protectedHeader = asMap.get("protected");
+            return protectedHeader == null ? null : String.valueOf(protectedHeader);
+        }
+        if (field.endsWith(".signature.signature")) {
+            Object signature = asMap.get("signature");
+            return signature == null ? null : String.valueOf(signature);
+        }
+        if (field.endsWith(".signature") || "signature".equals(field)) {
+            Object signature = asMap.get("signature");
+            if (signature != null) {
+                return String.valueOf(signature);
+            }
+        }
+
+        return null;
     }
 
     /**
