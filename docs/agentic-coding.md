@@ -1,6 +1,6 @@
-# BDD (and Standard Cucumber Steps) is a great fit for AI Agentic Coding
+# BDD (and Cucumber Testing Steps) is a great fit for AI Agentic Coding
 
-TLDR; AI coding agents — tools like Claude Code, Copilot Workspace, Devin, and similar systems — are increasingly used to generate code autonomously. BDD with Standard Cucumber Steps is a particularly good fit for this style of development as it simplifies the review process and reduces the scope for agent hallucination / goal gaming.
+TLDR; AI coding agents — tools like Claude Code, Copilot Workspace, Devin, and similar systems — are increasingly used to generate code autonomously. BDD with Cucumber Testing Steps is a particularly good fit for this style of development as it simplifies the review process and reduces the scope for agent hallucination / goal gaming.
 
 ---
 
@@ -69,9 +69,9 @@ But we didn't want methods like this!  We wanted to pass arguments for the amoun
 
 A runnable version of this anti-pattern is in [`examples/wrong`](../examples/wrong).
 
-## SCS removes the glue-code review burden and closes the gaming opportunity 
+## CTS removes the glue-code review burden and closes the gaming opportunity 
 
-With SCS, the agent would propose a slightly different scenario:
+With CTS, the agent would propose a slightly different scenario:
 
 ```gherkin
 Scenario: Customer deposits and withdraws money
@@ -94,7 +94,7 @@ Given('"account" is set up as a new bank account', function (this: PropsWorld) {
 });
 ```
 
-The SCS framework handles method invocation, argument coercion, result capture, and assertion. No bespoke step definitions are needed. A second scenario with different amounts requires zero additional code — just a new scenario block.
+The CTS framework handles method invocation, argument coercion, result capture, and assertion. No bespoke step definitions are needed. A second scenario with different amounts requires zero additional code — just a new scenario block.
 
 A runnable version of this correct pattern is in [`examples/right`](../examples/right).
 
@@ -110,7 +110,7 @@ This also means agents can keep documentation accurate. If a feature file descri
 |----------|------------------------------|
 | Human-readable specifications | Agents understand intent directly; no translation layer |
 | Executable scenarios | "Done" is unambiguous — scenarios pass or they do not |
-| Minimal glue code (SCS) | Agent output is small, focused, and easy to review |
+| Minimal glue code (CTS) | Agent output is small, focused, and easy to review |
 | Shared feature files across languages | One spec drives port and migration workflows in all target languages |
 | Structured failure output | Agents can parse and act on failures programmatically |
 | Living documentation | Stale specs fail; agents can keep behaviour and docs in sync |

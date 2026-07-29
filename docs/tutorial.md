@@ -1,6 +1,6 @@
-# Tutorial: Testing an API with Standard Cucumber Steps
+# Tutorial: Testing an API with Cucumber Testing Steps
 
-This tutorial walks through using SCS to write Cucumber tests for a small service. You will see how a single set of `.feature` files can drive tests in TypeScript, Java, Go, and C# against the same API contract.
+This tutorial walks through using CTS to write Cucumber tests for a small service. You will see how a single set of `.feature` files can drive tests in TypeScript, Java, Go, and C# against the same API contract.
 
 ---
 
@@ -35,7 +35,7 @@ We want to verify:
 
 ## Writing the feature file
 
-Feature files live in the shared `features/` directory and are written once. They use only SCS steps, except for the `Given` setup step that creates the account object — which is the only language-specific hook you need to write.
+Feature files live in the shared `features/` directory and are written once. They use only CTS steps, except for the `Given` setup step that creates the account object — which is the only language-specific hook you need to write.
 
 ```gherkin
 Feature: Bank account
@@ -82,13 +82,13 @@ A few things to notice:
 
 ## What you write once per language
 
-Only one step needs a language-specific implementation: the `Given "account" is set up as a new bank account` setup step. Everything else comes from SCS.
+Only one step needs a language-specific implementation: the `Given "account" is set up as a new bank account` setup step. Everything else comes from CTS.
 
 ### TypeScript
 
 ```typescript
 import { Given, Before } from '@cucumber/cucumber';
-import { PropsWorld, setupGenericSteps } from '@robmoffat/standard-cucumber-steps';
+import { PropsWorld, setupGenericSteps } from '@finos/cucumber-testing-steps';
 import { BankAccount } from '../src/BankAccount';
 
 setWorldConstructor(PropsWorld);
@@ -135,9 +135,9 @@ That's the only glue code needed. The four scenarios in the feature file run as-
 
 ## How prop references work
 
-SCS uses a shared dictionary called `props` (or `Props` in C# and Go) to pass values between steps. Any argument wrapped in `{...}` is resolved as a prop lookup at runtime:
+CTS uses a shared dictionary called `props` (or `Props` in C# and Go) to pass values between steps. Any argument wrapped in `{...}` is resolved as a prop lookup at runtime:
 
-| In the feature file | What SCS does |
+| In the feature file | What CTS does |
 |---------------------|---------------|
 | `"account"` | The literal string `account` (used as a method name or map key) |
 | `"{account}"` | Looks up `props["account"]` and passes its value |
@@ -226,7 +226,7 @@ cd java && mvn test
 cd go && go test ./...
 
 # C#
-dotnet test csharp/StandardCucumberSteps.csproj
+dotnet test csharp/test/Finos.CucumberTestingSteps.Tests.csproj
 ```
 
 Here's what the test output looks like in each language:

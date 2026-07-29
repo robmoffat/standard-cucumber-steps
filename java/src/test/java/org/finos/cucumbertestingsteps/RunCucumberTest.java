@@ -1,4 +1,4 @@
-package io.github.robmoffat;
+package org.finos.cucumbertestingsteps;
 
 import org.junit.platform.suite.api.ConfigurationParameter;
 import org.junit.platform.suite.api.IncludeEngines;
@@ -11,7 +11,7 @@ import static io.cucumber.junit.platform.engine.Constants.PLUGIN_PROPERTY_NAME;
 @Suite
 @IncludeEngines("cucumber")
 @ConfigurationParameter(key = FEATURES_PROPERTY_NAME, value = "../features,features")
-@ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "io.github.robmoffat,io.github.robmoffat.steps")
+@ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "org.finos.cucumbertestingsteps,org.finos.cucumbertestingsteps.steps")
 @ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty")
 public class RunCucumberTest {
 }

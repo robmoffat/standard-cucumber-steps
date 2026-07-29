@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/cucumber/godog"
-	generic "github.com/robmoffat/standard-cucumber-steps/go"
+	generic "github.com/finos/cucumber-testing-steps/go"
 )
 
 // TestCalculator is a helper struct for method invocation tests
@@ -171,7 +171,7 @@ func init() {
 
 func TestFeatures(t *testing.T) {
 	suite := godog.TestSuite{
-		Name: "standard-cucumber-steps",
+		Name: "cucumber-testing-steps",
 		ScenarioInitializer: func(ctx *godog.ScenarioContext) {
 			generic.ClearFieldMatchers()
 			generic.RegisterRegexFieldMatcher()

@@ -1,6 +1,6 @@
 # Release Process
 
-This document describes how to release Standard Cucumber Steps to npm, Maven Central, NuGet, and Go modules.
+This document describes how to release Cucumber Testing Steps to npm, Maven Central, NuGet, and Go modules.
 
 ## Prerequisites
 
@@ -12,11 +12,11 @@ npm publishing uses **Trusted Publishing** (OIDC) — no long-lived token is sto
 
 **One-time setup on npmjs.com** (required before the first CI publish):
 
-1. Go to https://www.npmjs.com/package/@robmoffat/standard-cucumber-steps → **Settings**
+1. Go to https://www.npmjs.com/package/@finos/cucumber-testing-steps → **Settings**
 2. Under **"Trusted publishing"**, click **"Add a trusted publisher"**
 3. Select **GitHub Actions** and fill in:
-   - **Repository owner**: `robmoffat`
-   - **Repository name**: `standard-cucumber-steps`
+   - **Repository owner**: `finos`
+   - **Repository name**: `cucumber-testing-steps`
    - **Workflow filename**: `release-typescript.yml` (must match exactly, case-sensitive)
 4. Save
 
@@ -28,10 +28,9 @@ Once configured, the workflow will publish automatically without any secrets. No
 
 Maven Central requires more setup than other registries:
 
-1. **Create a Sonatype account**
-   - Register at https://central.sonatype.org/
-   - Create a new project ticket to claim the `io.github.robmoffat` namespace
-   - Verify ownership by creating a temporary GitHub repo named after your ticket (e.g., `OSSRH-12345`)
+1. **Confirm FINOS Maven Central access**
+   - Ensure the release account is authorized to publish under the existing `org.finos` namespace in the Central Portal at https://central.sonatype.com/
+   - Generate a Central Portal user token for the GitHub Actions credentials
 
 2. **Generate a GPG key**
    ```bash
@@ -55,8 +54,8 @@ Maven Central requires more setup than other registries:
    Copy the entire output (including `-----BEGIN PGP PRIVATE KEY BLOCK-----`).
 
 5. **Add secrets to GitHub**:
-   - `CENTRAL_USERNAME` — Your Sonatype Central Portal username
-   - `CENTRAL_PASSWORD` — Your Sonatype Central Portal password or token
+   - `OSSRH_USERNAME` — Your Central Portal user token username
+   - `OSSRH_TOKEN` — Your Central Portal user token password
    - `GPG_PRIVATE_KEY` — The exported private key from step 4
    - `GPG_PASSPHRASE` — The passphrase you set when generating the key
 
@@ -78,13 +77,15 @@ No registry setup required. Go modules are served directly from GitHub via `prox
 
 Configure these in **Settings → Secrets and variables → Actions**:
 
-| Secret | Registry | Description |
-|--------|----------|-------------|
-| `OSSRH_USERNAME` | Maven Central | Sonatype JIRA username |
-| `OSSRH_TOKEN` | Maven Central | Sonatype JIRA password/token |
+| Secret | Registry / workflow | Description |
+|--------|---------------------|-------------|
+| `OSSRH_USERNAME` | Maven Central | Central Portal user token username |
+| `OSSRH_TOKEN` | Maven Central | Sonatype password/token |
 | `GPG_PRIVATE_KEY` | Maven Central | Armored GPG private key |
 | `GPG_PASSPHRASE` | Maven Central | GPG key passphrase |
 | `NUGET_API_KEY` | NuGet | API key from nuget.org |
+| `SONATYPE_GUIDE_TOKEN` | `cve-scanning.yml` | Sonatype AuditJS Guide token |
+| `SCORECARD_TOKEN` | `scorecard.yml` | Optional PAT for OpenSSF Scorecard Branch-Protection check |
 
 ---
 
@@ -105,9 +106,9 @@ git push origin go/v0.2.0
 ```
 
 This triggers three workflows in parallel for the shared tag:
-- `release-typescript.yml` → publishes `@robmoffat/standard-cucumber-steps` to npm
-- `release-java.yml` → publishes `io.github.robmoffat:standard-cucumber-steps` to Maven Central
-- `release-csharp.yml` → publishes `StandardCucumberSteps` to NuGet
+- `release-typescript.yml` → publishes `@finos/cucumber-testing-steps` to npm
+- `release-java.yml` → publishes `org.finos:cucumber-testing-steps` to Maven Central
+- `release-csharp.yml` → publishes `Finos.CucumberTestingSteps` to NuGet
 
 And one workflow for the Go tag:
 - `release-go.yml` → runs tests, creates a GitHub Release, and the Go module proxy picks up the new version
@@ -116,10 +117,10 @@ And one workflow for the Go tag:
 
 After pushing tags, check the Actions tab for workflow status. Once complete:
 
-- **npm**: https://www.npmjs.com/package/@robmoffat/standard-cucumber-steps
-- **Maven Central**: https://central.sonatype.com/artifact/io.github.robmoffat/standard-cucumber-steps (may take 10-30 minutes to sync)
-- **NuGet**: https://www.nuget.org/packages/StandardCucumberSteps
-- **Go**: https://pkg.go.dev/github.com/robmoffat/standard-cucumber-steps/go
+- **npm**: https://www.npmjs.com/package/@finos/cucumber-testing-steps
+- **Maven Central**: https://central.sonatype.com/artifact/org.finos/cucumber-testing-steps (may take 10-30 minutes to sync)
+- **NuGet**: https://www.nuget.org/packages/Finos.CucumberTestingSteps
+- **Go**: https://pkg.go.dev/github.com/finos/cucumber-testing-steps/go
 
 ---
 
@@ -138,9 +139,8 @@ All four language implementations should stay in sync on major/minor versions.
 ## Troubleshooting
 
 ### npm: "You must be logged in to publish packages"
-- Verify `NPM_TOKEN` is set correctly in GitHub Secrets
-- Ensure the token hasn't expired
-- Check the token has publish permissions
+- Verify trusted publishing is configured for the `finos/cucumber-testing-steps` repository and `release-typescript.yml`
+- Confirm the workflow uses a supported Node.js and npm CLI version
 
 ### Maven Central: "Could not find artifact"
 - New namespaces can take 10-30 minutes to sync to Maven Central
@@ -157,7 +157,7 @@ All four language implementations should stay in sync on major/minor versions.
 
 ### Go: Module not appearing on pkg.go.dev
 - Ensure the tag follows the `go/vX.Y.Z` format
-- Request indexing manually: `GOPROXY=proxy.golang.org go get github.com/robmoffat/standard-cucumber-steps/go@vX.Y.Z`
+- Request indexing manually: `GOPROXY=proxy.golang.org go get github.com/finos/cucumber-testing-steps/go@vX.Y.Z`
 
 ---
 

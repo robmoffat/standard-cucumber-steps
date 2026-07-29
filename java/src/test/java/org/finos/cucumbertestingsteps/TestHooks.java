@@ -1,4 +1,4 @@
-package io.github.robmoffat;
+package org.finos.cucumbertestingsteps;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -10,10 +10,10 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import io.github.robmoffat.steps.GenericSteps.FourArgFunction;
-import io.github.robmoffat.steps.GenericSteps.ThreeArgFunction;
-import io.github.robmoffat.support.MatchingUtils;
-import io.github.robmoffat.world.PropsWorld;
+import org.finos.cucumbertestingsteps.steps.GenericSteps.FourArgFunction;
+import org.finos.cucumbertestingsteps.steps.GenericSteps.ThreeArgFunction;
+import org.finos.cucumbertestingsteps.support.MatchingUtils;
+import org.finos.cucumbertestingsteps.world.PropsWorld;
 
 import io.cucumber.java.Before;
 import io.cucumber.java.Scenario;

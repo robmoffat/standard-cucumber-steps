@@ -2,10 +2,10 @@ using System.Reflection;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Reqnroll;
-using StandardCucumberSteps.Support;
-using StandardCucumberSteps.World;
+using Finos.CucumberTestingSteps.Support;
+using Finos.CucumberTestingSteps.World;
 
-namespace StandardCucumberSteps.Steps;
+namespace Finos.CucumberTestingSteps.Steps;
 
 [Binding]
 public class GenericSteps

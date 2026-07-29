@@ -1,7 +1,8 @@
 {
-  "name": "@robmoffat/standard-cucumber-steps",
+  "name": "@finos/cucumber-testing-steps",
   "version": "1.0.2",
   "description": "Reusable Cucumber step definitions for TypeScript",
+  "author": "Fintech Open Source Foundation (FINOS)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -45,7 +46,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/robmoffat/standard-cucumber-steps"
+    "url": "https://github.com/finos/cucumber-testing-steps"
   },
   "license": "Apache-2.0"
 }
