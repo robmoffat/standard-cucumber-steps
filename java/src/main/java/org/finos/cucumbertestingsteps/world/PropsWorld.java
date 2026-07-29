@@ -1,4 +1,4 @@
-package io.github.robmoffat.world;
+package org.finos.cucumbertestingsteps.world;
 
 import java.util.Collection;
 import java.util.HashMap;

@@ -77,7 +77,7 @@ func valueAtPath(rowData interface{}, path string) (interface{}, error) {
 	return jsonpath.Get("$."+path, actualMap)
 }
 
-// RegisterRegexFieldMatcher installs the test-only _regex suffix matcher (SCS feature tests).
+// RegisterRegexFieldMatcher installs the test-only _regex suffix matcher (CTS feature tests).
 func RegisterRegexFieldMatcher() {
 	RegisterFieldMatcher(regexFieldMatcher{})
 }

@@ -41,7 +41,7 @@ jobs:
 
                       Install with:
                       ```
-                      go get github.com/robmoffat/standard-cucumber-steps/go@${{ steps.version.outputs.VERSION }}
+                      go get github.com/finos/cucumber-testing-steps/go@${{ steps.version.outputs.VERSION }}
                       ```
                   generate_release_notes: true
               env:

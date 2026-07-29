@@ -2,7 +2,7 @@ module.exports = {
   default: {
     paths: ['features/**/*.feature'],
     require: [
-      'node_modules/@robmoffat/standard-cucumber-steps/dist/support/setup.js',
+      'node_modules/@finos/cucumber-testing-steps/dist/support/setup.js',
       'src/**/*.ts'
     ],
     requireModule: ['ts-node/register'],

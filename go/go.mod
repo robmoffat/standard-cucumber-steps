@@ -1,4 +1,4 @@
-module github.com/robmoffat/standard-cucumber-steps/go
+module github.com/finos/cucumber-testing-steps/go
 
 go 1.21
 

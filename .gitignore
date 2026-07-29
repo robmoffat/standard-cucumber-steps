@@ -16,6 +16,7 @@ target/
 bin/
 *.out
 *.test
+go/coverage.html
 
 # C# / .NET
 obj/

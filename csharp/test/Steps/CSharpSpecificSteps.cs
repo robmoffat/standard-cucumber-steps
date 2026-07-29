@@ -1,8 +1,8 @@
 using Reqnroll;
-using StandardCucumberSteps.Support;
-using StandardCucumberSteps.World;
+using Finos.CucumberTestingSteps.Support;
+using Finos.CucumberTestingSteps.World;
 
-namespace StandardCucumberSteps.Steps;
+namespace Finos.CucumberTestingSteps.Steps;
 
 /// <summary>
 /// Step definitions that exist solely to exercise C#-specific code paths in GenericSteps

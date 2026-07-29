@@ -1,13 +1,13 @@
 {
   "name": "bank-account-right",
   "version": "1.0.0",
-  "description": "Correct pattern: one setup hook, all step logic handled by SCS",
+  "description": "Correct pattern: one setup hook, all step logic handled by CTS",
   "scripts": {
     "test": "cucumber-js"
   },
   "dependencies": {
     "@cucumber/cucumber": "^10.0.0",
-    "@robmoffat/standard-cucumber-steps": "1.1.0"
+    "@finos/cucumber-testing-steps": "1.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

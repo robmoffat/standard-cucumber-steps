@@ -8,10 +8,10 @@
             <ModulePaths>
               <!-- Only measure the library assembly, not the test runner -->
               <Include>
-                <ModulePath>.*StandardCucumberSteps\.dll</ModulePath>
+                <ModulePath>.*CucumberTestingSteps\.dll</ModulePath>
               </Include>
               <Exclude>
-                <ModulePath>.*StandardCucumberSteps\.Tests\.dll</ModulePath>
+                <ModulePath>.*CucumberTestingSteps\.Tests\.dll</ModulePath>
               </Exclude>
             </ModulePaths>
             <Attributes>

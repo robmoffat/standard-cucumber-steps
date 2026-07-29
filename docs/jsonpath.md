@@ -1,12 +1,12 @@
 # JSONPath Navigation
 
-SCS resolves any prop reference that contains a dot or bracket as a path into the stored object, not just a flat key lookup. This applies everywhere a `{...}` reference appears: step arguments, assertion values, and DataTable column headers.
+CTS resolves any prop reference that contains a dot or bracket as a path into the stored object, not just a flat key lookup. This applies everywhere a `{...}` reference appears: step arguments, assertion values, and DataTable column headers.
 
 ---
 
 ## How it works
 
-When a `{...}` reference is resolved, SCS first looks up the root key in props. If the reference continues with `.field`, `[index]`, or a combination, the remainder is applied as a path into the resolved object.
+When a `{...}` reference is resolved, CTS first looks up the root key in props. If the reference continues with `.field`, `[index]`, or a combination, the remainder is applied as a path into the resolved object.
 
 | Reference | Meaning |
 |-----------|---------|

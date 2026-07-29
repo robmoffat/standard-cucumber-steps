@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace StandardCucumberSteps.World;
+namespace Finos.CucumberTestingSteps.World;
 
 public class PropsWorld
 {

@@ -1,17 +1,20 @@
-# Standard Cucumber Steps
+# Cucumber Testing Steps
 
-[![npm](https://img.shields.io/npm/v/%40robmoffat%2Fstandard-cucumber-steps?label=npm)](https://www.npmjs.com/package/@robmoffat/standard-cucumber-steps)
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.robmoffat/standard-cucumber-steps?label=maven)](https://central.sonatype.com/artifact/io.github.robmoffat/standard-cucumber-steps)
-[![NuGet](https://img.shields.io/nuget/v/StandardCucumberSteps?label=nuget)](https://www.nuget.org/packages/StandardCucumberSteps)
-[![Go](https://img.shields.io/github/v/tag/robmoffat/standard-cucumber-steps?filter=go%2F*&label=go)](https://pkg.go.dev/github.com/robmoffat/standard-cucumber-steps/go)
+[![FINOS - Graduated](https://cdn.jsdelivr.net/gh/finos/contrib-toolbox@master/images/badge-graduated.svg)](https://community.finos.org/docs/governance/lifecycle-stages/graduated)
+[![npm](https://img.shields.io/npm/v/%40finos%2Fcucumber-testing-steps?label=npm)](https://www.npmjs.com/package/@finos/cucumber-testing-steps)
+[![Maven Central](https://img.shields.io/maven-central/v/org.finos/cucumber-testing-steps?label=maven)](https://central.sonatype.com/artifact/org.finos/cucumber-testing-steps)
+[![NuGet](https://img.shields.io/nuget/v/Finos.CucumberTestingSteps?label=nuget)](https://www.nuget.org/packages/Finos.CucumberTestingSteps)
+[![Go](https://img.shields.io/github/v/tag/finos/cucumber-testing-steps?filter=go%2F*&label=go)](https://pkg.go.dev/github.com/finos/cucumber-testing-steps/go)
 
 TLDR: Reusable Cucumber step definitions for TypeScript, Java, Go, and C# — a single canonical DSL for BDD testing across languages.  An excellent fit for hands-off, agentic code development.
+
+This library is moving under the FINOS [FDC3](https://github.com/finos/FDC3) project as **cucumber-testing-steps** (see [finos/FDC3#1889](https://github.com/finos/FDC3/issues/1889)).
 
 ## What this is
 
 The downside of BDD / Cucumber is having to maintain the step code - code that links step text (Given... When... Then...) to executable code in the tests themselves.
 
-Standard Cucumber Steps (SCS) is a library of pre-built Cucumber step definitions, available for TypeScript, Java, Go, and C#. Instead of writing `Given`, `When`, and `Then` glue code yourself, you import SCS and immediately get a rich vocabulary for calling functions, inspecting results, and asserting on data — all driven by a shared scenario language.
+Cucumber Testing Steps (CTS) is a library of pre-built Cucumber step definitions, available for TypeScript, Java, Go, and C#. Instead of writing `Given`, `When`, and `Then` glue code yourself, you import CTS and immediately get a rich vocabulary for calling functions, inspecting results, and asserting on data — all driven by a shared scenario language.
 
 ## Why this is useful
 
@@ -26,7 +29,7 @@ Cucumber is a good fit for some testing problems and a poor fit for others. Befo
 | Pro | **Reporting is excellent** | Step definitions pass and fail cleanly and you can see exactly how far a test has got without debugging it |
 | Con | **Higher maintenance overhead** | Each scenario needs corresponding step definitions; large test suites can become hard to manage without discipline. This usually puts developers off using Cucumber as you feel you are writing everything twice. |
 
-SCS addresses the maintenance cost directly: writing step definitions is repetitive boilerplate that every project reimplements. SCS does it once, correctly, across four languages.
+CTS addresses the maintenance cost directly: writing step definitions is repetitive boilerplate that every project reimplements. CTS does it once, correctly, across four languages.
 
 This is especially valuable when:
 
@@ -34,7 +37,7 @@ This is especially valuable when:
 - **Migrating between languages** — the same feature files document the expected contract before, during, and after a migration.
 - **Adopting BDD on an existing codebase** — wire up your service with a few lines in a `@Before` hook and the step library covers the rest.
 - **Writing tests for generated code** — code generators that target multiple languages can share a single golden test suite.
-- **Working with agentic AI coding** - Feature files are an unusually clear form of instruction both for an AI coding agent and a human reviewer.   See [BDD and SCS for AI agentic coding](docs/agentic-coding.md) for a full discussion.
+- **Working with agentic AI coding** - Feature files are an unusually clear form of instruction both for an AI coding agent and a human reviewer.   See [BDD and CTS for AI agentic coding](docs/agentic-coding.md) for a full discussion.
 
 ---
 
@@ -63,7 +66,7 @@ Scenario: Depositing money increases the balance
   Then "{result}" is "150"
 ```
 
-The `Given` step is the only language-specific glue you need to write — it puts your object into the shared `props` store. Every other step comes from SCS.
+The `Given` step is the only language-specific glue you need to write — it puts your object into the shared `props` store. Every other step comes from CTS.
 
 See the [tutorial](docs/tutorial.md) for a full walkthrough.
 
@@ -73,10 +76,10 @@ See the [tutorial](docs/tutorial.md) for a full walkthrough.
 
 #### Cucumber-js
 
-Install SCS and the runner you use (each runner ships its own `Given` / `When` / `Then`; you must pass **that** module into `setupGenericSteps`).
+Install CTS and the runner you use (each runner ships its own `Given` / `When` / `Then`; you must pass **that** module into `setupGenericSteps`).
 
 ```bash
-npm install @robmoffat/standard-cucumber-steps
+npm install @finos/cucumber-testing-steps
 npm install @cucumber/cucumber
 ```
 
@@ -89,7 +92,7 @@ import {
   setupGenericSteps,
   cucumberWrapStep,
   type PropsWorldLike,
-} from '@robmoffat/standard-cucumber-steps';
+} from '@finos/cucumber-testing-steps';
 
 export class MyWorld extends World implements PropsWorldLike {
   props: Record<string, unknown> = {};
@@ -119,7 +122,7 @@ import {
   setupGenericSteps,
   quickpickleWrapStep,
   type PropsWorldLike,
-} from '@robmoffat/standard-cucumber-steps';
+} from '@finos/cucumber-testing-steps';
 
 export class MyWorld extends QuickPickleWorld implements PropsWorldLike {
   props: Record<string, unknown> = {};
@@ -141,8 +144,8 @@ Before(async (world: MyWorld) => {
 
 ```xml
 <dependency>
-  <groupId>io.github.robmoffat</groupId>
-  <artifactId>standard-cucumber-steps</artifactId>
+  <groupId>org.finos</groupId>
+  <artifactId>cucumber-testing-steps</artifactId>
   <version>0.1.0</version>
 </dependency>
 ```
@@ -150,11 +153,11 @@ Before(async (world: MyWorld) => {
 ### Go
 
 ```bash
-go get github.com/robmoffat/standard-cucumber-steps/go
+go get github.com/finos/cucumber-testing-steps/go
 ```
 
 ```go
-import generic "github.com/robmoffat/standard-cucumber-steps/go"
+import generic "github.com/finos/cucumber-testing-steps/go"
 
 world := generic.NewPropsWorld()
 world.RegisterSteps(ctx)
@@ -163,7 +166,7 @@ world.RegisterSteps(ctx)
 ### C# (NuGet)
 
 ```bash
-dotnet add package StandardCucumberSteps
+dotnet add package Finos.CucumberTestingSteps
 ```
 
 ---
@@ -191,7 +194,7 @@ The `examples/` directory contains two small runnable TypeScript projects that i
 | Example | Description |
 |---------|-------------|
 | [`examples/wrong`](examples/wrong) | Agent-generated bespoke step definitions — hardcoded to specific values, breaks on the second scenario |
-| [`examples/right`](examples/right) | SCS-based — a single setup hook, both scenarios pass with zero additional glue code |
+| [`examples/right`](examples/right) | CTS-based — a single setup hook, both scenarios pass with zero additional glue code |
 
 ---
 
@@ -316,16 +319,32 @@ The `features/` directory contains `.feature` files that exercise every canonica
 
 ## Used by
 
-SCS was extracted from three [FINOS](https://www.finos.org/) open-source projects.  Factoring it out into a shared library means each project gets consistent behaviour.
+CTS was extracted from three [FINOS](https://www.finos.org/) open-source projects.  Factoring it out into a shared library means each project gets consistent behaviour.
 
 | Project | Language | Description |
 |---------|----------|-------------|
-| [FDC3](https://github.com/finos/FDC3) | TypeScript | The FDC3 desktop interoperability standard; SCS drives its conformance test suite |
-| [FDC3-java-api](https://github.com/finos/fdc3-java-api) | Java | Java implementation of the FDC3 API; uses SCS to verify the Java bindings against the same feature files |
-| [ccc-cfi-compliance](https://github.com/finos-labs/ccc-cfi-compliance) | Go | FINOS Common Cloud Controls compliance testing; uses SCS as the generic step layer for cross-language contract verification |
+| [FDC3](https://github.com/finos/FDC3) | TypeScript | The FDC3 desktop interoperability standard; CTS drives its conformance test suite |
+| [FDC3-java-api](https://github.com/finos/fdc3-java-api) | Java | Java implementation of the FDC3 API; uses CTS to verify the Java bindings against the same feature files |
+| [ccc-cfi-compliance](https://github.com/finos-labs/ccc-cfi-compliance) | Go | FINOS Common Cloud Controls compliance testing; uses CTS as the generic step layer for cross-language contract verification |
 
-Each of these projects wires up its own domain objects in a single `@Before` hook and then delegates all step execution to SCS.
+Each of these projects wires up its own domain objects in a single `@Before` hook and then delegates all step execution to CTS.
+
+## Contributing
+
+For questions, bugs, or feature requests please open an [issue](https://github.com/finos/cucumber-testing-steps/issues).
+
+To contribute:
+
+1. Read [CONTRIBUTING.md](CONTRIBUTING.md) and the [FINOS Code of Conduct](CODE_OF_CONDUCT.md)
+2. Fork the repository and open a pull request
+3. See [MAINTAINERS.md](MAINTAINERS.md) for the current maintainer roster
+
+Security issues should be reported privately — see [SECURITY.md](SECURITY.md).
 
 ## License
 
-Apache 2.0
+Copyright 2026 Rob Moffat
+
+Distributed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+
+SPDX-License-Identifier: [Apache-2.0](https://spdx.org/licenses/Apache-2.0)

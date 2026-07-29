@@ -1,7 +1,7 @@
 using Reqnroll;
-using StandardCucumberSteps.World;
+using Finos.CucumberTestingSteps.World;
 
-namespace StandardCucumberSteps.Support;
+namespace Finos.CucumberTestingSteps.Support;
 
 [Binding]
 public class Hooks

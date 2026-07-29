@@ -1,0 +1,7 @@
+SPDXVersion: SPDX-2.0
+DataLicense: CC0-1.0
+Creator: Rob Moffat
+PackageName: cucumber-testing-steps
+PackageOriginator: Fintech Open Source Foundation (FINOS)
+PackageHomePage: https://github.com/finos/cucumber-testing-steps
+PackageLicenseDeclared: Apache-2.0

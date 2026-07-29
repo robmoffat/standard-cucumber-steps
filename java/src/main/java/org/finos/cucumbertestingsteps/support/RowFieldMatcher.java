@@ -1,6 +1,6 @@
-package io.github.robmoffat.support;
+package org.finos.cucumbertestingsteps.support;
 
-import io.github.robmoffat.world.PropsWorld;
+import org.finos.cucumbertestingsteps.world.PropsWorld;
 
 /**
  * Pluggable matcher for Gherkin table columns with custom semantics.
