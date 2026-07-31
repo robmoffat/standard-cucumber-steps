@@ -65,7 +65,7 @@ Maven Central requires more setup than other registries:
 2. Generate an API key at https://www.nuget.org/account/apikeys
    - Scope it to push new packages and package versions
    - Set appropriate expiration
-3. Add the key as `NUGET_API_KEY` in GitHub Secrets
+3. Add the key as `NUGET_KEY` in GitHub Secrets — this is the same secret name the FINOS org uses for its other .NET packages, so an org-level secret may already cover this repository
 
 #### Go
 
@@ -83,7 +83,7 @@ Configure these in **Settings → Secrets and variables → Actions**:
 | `OSSRH_TOKEN` | Maven Central | Sonatype password/token |
 | `GPG_PRIVATE_KEY` | Maven Central | Armored GPG private key |
 | `GPG_PASSPHRASE` | Maven Central | GPG key passphrase |
-| `NUGET_API_KEY` | NuGet | API key from nuget.org |
+| `NUGET_KEY` | NuGet | API key from nuget.org (may be provided as a FINOS org secret) |
 | `SONATYPE_GUIDE_TOKEN` | `cve-scanning.yml` | Sonatype AuditJS Guide token |
 | `SCORECARD_TOKEN` | `scorecard.yml` | Optional PAT for OpenSSF Scorecard Branch-Protection check |
 
