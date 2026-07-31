@@ -5,6 +5,8 @@ dist/
 coverage/
 reports/
 typescript/README.md
+typescript/LICENSE
+typescript/NOTICE
 typescript/*.tgz
 
 

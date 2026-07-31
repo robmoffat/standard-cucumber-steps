@@ -1,12 +1,12 @@
 {
   "name": "@finos/cucumber-testing-steps",
-  "version": "1.0.2",
+  "version": "1.2.2",
   "description": "Reusable Cucumber step definitions for TypeScript",
   "author": "Fintech Open Source Foundation (FINOS)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc && cp ../README.md ./README.md",
+    "build": "tsc && cp ../README.md ./README.md && cp ../LICENSE ./LICENSE && cp ../NOTICE ./NOTICE",
     "test": "npm run test:cucumber:cover && npm run test:quickpickle:cover && npm run coverage:report",
     "test:cucumber": "c8 cucumber-js",
     "test:quickpickle": "vitest run",
@@ -42,7 +42,8 @@
     "vitest": "^3.0.0"
   },
   "files": [
-    "dist/**/*"
+    "dist/**/*",
+    "NOTICE"
   ],
   "repository": {
     "type": "git",
