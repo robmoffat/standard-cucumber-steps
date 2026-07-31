@@ -8,8 +8,6 @@
 
 TLDR: Reusable Cucumber step definitions for TypeScript, Java, Go, and C# — a single canonical DSL for BDD testing across languages.  An excellent fit for hands-off, agentic code development.
 
-This library is moving under the FINOS [FDC3](https://github.com/finos/FDC3) project as **cucumber-testing-steps** (see [finos/FDC3#1889](https://github.com/finos/FDC3/issues/1889)).
-
 ## What this is
 
 The downside of BDD / Cucumber is having to maintain the step code - code that links step text (Given... When... Then...) to executable code in the tests themselves.
